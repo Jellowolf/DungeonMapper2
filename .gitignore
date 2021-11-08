@@ -1,0 +1,5 @@
+﻿# common visual studio ignores
+/.vs
+/DungeonMapper2/bin
+/DungeonMapper2/obj
+/DungeonMapper2/DungeonMapper2.csproj.user
