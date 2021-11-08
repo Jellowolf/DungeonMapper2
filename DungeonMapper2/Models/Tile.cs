@@ -1,4 +1,4 @@
-﻿namespace DungeonMapper2
+﻿namespace DungeonMapper2.Models
 {
     public class Tile
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace DungeonMapper2
+namespace DungeonMapper2.Models
 {
     public class BasePathItem : IPathItem
     {

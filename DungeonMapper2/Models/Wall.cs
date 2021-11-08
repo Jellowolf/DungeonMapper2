@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace DungeonMapper2
+namespace DungeonMapper2.Models
 {
     [Flags]
     public enum Wall

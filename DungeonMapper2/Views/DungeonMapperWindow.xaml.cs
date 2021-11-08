@@ -1,4 +1,5 @@
 ﻿using DungeonMapper2.DataAccess;
+using DungeonMapper2.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,12 +7,12 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 
-namespace DungeonMapper2
+namespace DungeonMapper2.Views
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class DungeonMapperWindow : Window
     {
         private List<Map> TreeData;
         private List<Map> Maps;
@@ -19,7 +20,7 @@ namespace DungeonMapper2
         private double PreviousSplitterWidth;
         private Point DragPositionStart;
 
-        public MainWindow()
+        public DungeonMapperWindow()
         {
             InitializeComponent();
             DatabaseManager.InitializeDatabase();

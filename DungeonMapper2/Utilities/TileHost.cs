@@ -1,7 +1,7 @@
 ﻿using System.Windows;
 using System.Windows.Media;
 
-namespace DungeonMapper2
+namespace DungeonMapper2.Utilities
 {
     public class TileHost : FrameworkElement
     {

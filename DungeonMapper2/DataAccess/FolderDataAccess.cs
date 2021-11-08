@@ -1,4 +1,5 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using DungeonMapper2.Models;
+using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 using System.Linq;

@@ -1,10 +1,11 @@
 ﻿using DungeonMapper2.DataAccess;
+using DungeonMapper2.Utilities;
 using System;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 
-namespace DungeonMapper2
+namespace DungeonMapper2.Models
 {
     public class Map : BasePathItem
     {
