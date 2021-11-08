@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DungeonMapper2"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Dungeon Mapper 2" Height="750" Width="1000"
         Background="DarkGray">
@@ -24,19 +25,33 @@
         </Grid.ColumnDefinitions>
 
         <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3">
-            <Button Focusable="False" x:Name="clearButton" Content="Clear" HorizontalAlignment="Left" Margin="115,10,0,0" VerticalAlignment="Top" Click="clearButton_Click"/>
-            <Button Focusable="False" x:Name="deleteButton" Content="Delete" HorizontalAlignment="Left" Margin="163,10,0,0" VerticalAlignment="Top" Click="deleteButton_Click"/>
-            <CheckBox x:Name="autoSavecheckBox" Content="auto-save" HorizontalAlignment="Left" Margin="273,10,0,0" VerticalAlignment="Top"/>
-            <Button Focusable="False" x:Name="previousButton" Content="&lt; Previous" HorizontalAlignment="Left" Margin="375,10,0,0" VerticalAlignment="Top" Click="previousButton_Click"/>
-            <Button Focusable="False" x:Name="nextButton" Content="Next &gt;" HorizontalAlignment="Left" Margin="596,10,0,0" VerticalAlignment="Top" Click="nextButton_Click"/>
-            <Button Focusable="False" x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="68,10,0,0" VerticalAlignment="Top" Click="saveButton_Click"/>
-            <TextBox x:Name="MapName" HorizontalAlignment="Left" Margin="453,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <Button Focusable="False" x:Name="clearButton" Content="Clear" HorizontalAlignment="Left" Margin="115,10,0,0" VerticalAlignment="Top" Command="{Binding ClearCurrentMapCommand}"/>
+            <Button Focusable="False" x:Name="deleteButton" Content="Delete" HorizontalAlignment="Left" Margin="163,10,0,0" VerticalAlignment="Top" Command="{Binding DeleteCurrentMapCommand}"/>
+            <CheckBox x:Name="autoSavecheckBox" Content="auto-save" HorizontalAlignment="Left" Margin="273,10,0,0" VerticalAlignment="Top" IsChecked="{Binding AutoSaveEnabled}"/>
+            <Button Focusable="False" x:Name="previousButton" Content="&lt; Previous" HorizontalAlignment="Left" Margin="375,10,0,0" VerticalAlignment="Top" Command="{Binding MoveToPreviousMapCommand}"/>
+            <Button Focusable="False" x:Name="nextButton" Content="Next &gt;" HorizontalAlignment="Left" Margin="596,10,0,0" VerticalAlignment="Top" Command="{Binding MoveToNextMapCommand}"/>
+            <Button Focusable="False" x:Name="saveButton" Content="Save" HorizontalAlignment="Left" Margin="68,10,0,0" VerticalAlignment="Top" Command="{Binding SaveCurrentMapCommand}"/>
+            <TextBox x:Name="MapName" HorizontalAlignment="Left" Margin="453,10,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120" Text="{Binding MapName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
         </Grid>
 
         <DockPanel Grid.Column="1" Grid.Row="1">
             <TextBox DockPanel.Dock="Top" Text="FolderNameHere" Visibility="Collapsed"/>
-            <TreeView DockPanel.Dock="Bottom" x:Name="treeView" Background="DarkGray" Focusable="False" SelectedItemChanged="treeView_SelectedItemChanged" ItemTemplate="{StaticResource MapTemplate}"
-                      MouseLeftButtonDown="treeView_MouseDown" MouseMove="treeView_MouseMove" Drop="treeView_Drop" AllowDrop="True"/>
+            <TreeView DockPanel.Dock="Bottom" x:Name="treeView" Background="DarkGray" Focusable="False" ItemTemplate="{StaticResource MapTemplate}" AllowDrop="True" ItemsSource="{Binding TreeData}">
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="SelectedItemChanged">
+                        <i:InvokeCommandAction Command="{Binding HandleTreeSelectionChangedCommand}" PassEventArgsToCommand="True"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseLeftButtonDown">
+                        <i:InvokeCommandAction Command="{Binding HandleTreeMouseDownCommand}" PassEventArgsToCommand="True"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="MouseMove">
+                        <i:InvokeCommandAction Command="{Binding HandleTreeMouseMoveCommand}" PassEventArgsToCommand="True"/>
+                    </i:EventTrigger>
+                    <i:EventTrigger EventName="Drop">
+                        <i:InvokeCommandAction Command="{Binding HandleTreeDropCommand}" PassEventArgsToCommand="True"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </TreeView>
         </DockPanel>
 
         <Border Grid.Row="1" Grid.Column="2" Height="30" Width="10" CornerRadius="0,8,8,0" BorderThickness="1" BorderBrush="DimGray" Background="DimGray"
@@ -46,7 +61,13 @@
         <DockPanel Grid.Row="1" Grid.Column="2">
             <ScrollViewer DockPanel.Dock="Bottom" x:Name="scrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
                           Background="Black" FocusManager.FocusedElement="{Binding ElementName=canvas}">
-                <Canvas x:Name="canvas" ScrollViewer.CanContentScroll="True" Margin="50" Focusable="True" KeyDown="Canvas_KeyDown"/>
+                <Canvas x:Name="canvas" ScrollViewer.CanContentScroll="True" Margin="50" Focusable="True">
+                    <i:Interaction.Triggers>
+                        <i:EventTrigger EventName="KeyDown">
+                            <i:InvokeCommandAction Command="{Binding MapKeyDownCommand}" PassEventArgsToCommand="True"/>
+                        </i:EventTrigger>
+                    </i:Interaction.Triggers>
+                </Canvas>
             </ScrollViewer>
         </DockPanel>
     </Grid>

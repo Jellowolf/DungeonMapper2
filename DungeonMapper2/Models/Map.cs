@@ -12,7 +12,6 @@ namespace DungeonMapper2.Models
         private (int x, int y) _position;
         public bool HallMode;
         public Tile[][] mapData;
-        private int TileSize;
         private int WallWidth;
         private int DoorWidth;
         private TileHost MapHost;
@@ -21,9 +20,11 @@ namespace DungeonMapper2.Models
 
         public (int x, int y) Position { get => _position; set => _position = value; }
 
-        public int maxIndexX { get; set; }
+        public int TileSize { get; set; }
 
-        public int maxIndexY { get; set; }
+        public int MaxIndexX { get; set; }
+
+        public int MaxIndexY { get; set; }
 
         public int? FolderId { get; set; }
 
@@ -38,21 +39,21 @@ namespace DungeonMapper2.Models
         {
             _position = (0, 0);
             mapData = new Tile[][] { new Tile[] { new Tile(true) } };
-            maxIndexX = 0;
-            maxIndexY = 0;
+            MaxIndexX = 0;
+            MaxIndexY = 0;
             HallMode = false;
         }
 
         public (int x, int y) MoveUp()
         {
             _position.y += 1;
-            if (maxIndexY < _position.y)
+            if (MaxIndexY < _position.y)
             {
                 for (var index = 0; index < mapData.Length; index++)
                 {
                     Array.Resize(ref mapData[index], mapData[index].Length + 1);
                 }
-                maxIndexY++;
+                MaxIndexY++;
             }
             UpdateTile(Movement.Up);
             return _position;
@@ -69,7 +70,7 @@ namespace DungeonMapper2.Models
                     Array.Copy(mapData[index], 0, mapData[index], 1, mapData[index].Length - 1);
                     mapData[index][0] = new Tile(false);
                 }
-                maxIndexY++;
+                MaxIndexY++;
                 _position.y = 0;
             }
             UpdateTile(Movement.Down);
@@ -83,8 +84,8 @@ namespace DungeonMapper2.Models
             {
                 Array.Resize(ref mapData, mapData.Length + 1);
                 Array.Copy(mapData, 0, mapData, 1, mapData.Length - 1);
-                mapData[0] = new Tile[maxIndexY + 1];
-                maxIndexX++;
+                mapData[0] = new Tile[MaxIndexY + 1];
+                MaxIndexX++;
                 _position.x = 0;
             }
             UpdateTile(Movement.Left);
@@ -94,11 +95,11 @@ namespace DungeonMapper2.Models
         public (int x, int y) MoveRight()
         {
             _position.x += 1;
-            if (maxIndexX < _position.x)
+            if (MaxIndexX < _position.x)
             {
                 Array.Resize(ref mapData, mapData.Length + 1);
-                mapData[mapData.Length - 1] = new Tile[maxIndexY + 1];
-                maxIndexX++;
+                mapData[mapData.Length - 1] = new Tile[MaxIndexY + 1];
+                MaxIndexX++;
             }
             UpdateTile(Movement.Right);
             return _position;
@@ -165,11 +166,11 @@ namespace DungeonMapper2.Models
         public string PrintToString()
         {
             var mapString = string.Empty;
-            for (int indexY = 0; indexY < maxIndexY + 1; indexY++)
+            for (int indexY = 0; indexY < MaxIndexY + 1; indexY++)
             {
-                for (int indexX = 0; indexX < maxIndexX + 1; indexX++)
+                for (int indexX = 0; indexX < MaxIndexX + 1; indexX++)
                 {
-                    var tile = mapData[indexX][maxIndexY - indexY];
+                    var tile = mapData[indexX][MaxIndexY - indexY];
                     mapString += (tile != null && tile.Traveled) ? "1" : "0";
                 }
                 mapString += "\n";
@@ -177,22 +178,18 @@ namespace DungeonMapper2.Models
             return mapString;
         }
 
-        public void PrintToCanvas(Canvas canvas)
+        public TileHost PrintToHost()
         {
-            canvas.Children.Clear();
-            canvas.Height = maxIndexY * TileSize;
-            canvas.Width = maxIndexX * TileSize;
-
             var mapDrawing = new DrawingVisual();
             var drawingContext = mapDrawing.RenderOpen();
 
             int left, top;
 
-            for (int indexY = 0; indexY < maxIndexY + 1; indexY++)
+            for (int indexY = 0; indexY < MaxIndexY + 1; indexY++)
             {
-                for (int indexX = 0; indexX < maxIndexX + 1; indexX++)
+                for (int indexX = 0; indexX < MaxIndexX + 1; indexX++)
                 {
-                    var tile = mapData[indexX][maxIndexY - indexY];
+                    var tile = mapData[indexX][MaxIndexY - indexY];
                     left = (indexX * TileSize) + 1;
                     top = (indexY * TileSize) + 1;
 
@@ -228,7 +225,7 @@ namespace DungeonMapper2.Models
             }
 
             left = _position.x * TileSize;
-            top = (maxIndexY - _position.y) * TileSize;
+            top = (MaxIndexY - _position.y) * TileSize;
 
             // draw the _position marker
             drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + 1, top + 1, 3, 7));
@@ -244,16 +241,15 @@ namespace DungeonMapper2.Models
             drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + TileSize - 2, top + TileSize - 6, 3, 7));
 
             drawingContext.Close();
-            MapHost = new TileHost { VisualElement = mapDrawing };
-            canvas.Children.Add(MapHost);
+            return new TileHost { VisualElement = mapDrawing };
         }
 
         public void LoadData()
         {
             if (!Id.HasValue) return;
             mapData = TileDataAccess.GetTiles(Id.Value);
-            maxIndexX = mapData.Length - 1;
-            maxIndexY = mapData[0].Length - 1;
+            MaxIndexX = mapData.Length - 1;
+            MaxIndexY = mapData[0].Length - 1;
         }
     }
 }
