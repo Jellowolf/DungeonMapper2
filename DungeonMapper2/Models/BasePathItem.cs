@@ -22,6 +22,10 @@ namespace DungeonMapper2.Models
 
         public ObservableCollection<IPathItem> ChildItems { get; set; }
 
+        public bool IsSelected { get; set; }
+
+        public bool IsExpanded { get; set; }
+
         protected void OnPropertyChanged(string propertyName)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));

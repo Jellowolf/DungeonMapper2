@@ -8,10 +8,19 @@
         mc:Ignorable="d"
         Title="Dungeon Mapper 2" Height="750" Width="1000"
         Background="DarkGray">
+    <i:Interaction.Triggers>
+        <i:EventTrigger EventName="Closing">
+            <i:InvokeCommandAction Command="{Binding HandleWidowClosingCommand}"/>
+        </i:EventTrigger>
+    </i:Interaction.Triggers>
     <Window.Resources>
-        <HierarchicalDataTemplate x:Key="MapTemplate" ItemsSource="{Binding ChildItems}">
+        <HierarchicalDataTemplate x:Key="PathItemTemplate" ItemsSource="{Binding ChildItems}">
             <TextBlock Text="{Binding Path=Name}"/>
         </HierarchicalDataTemplate>
+        <Style x:Key="PathItemStyle" TargetType="TreeViewItem">
+            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
+            <Setter Property="IsExpanded" Value="{Binding Path=IsExpanded, Mode=TwoWay}"/>
+        </Style>
     </Window.Resources>
     <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
@@ -34,8 +43,8 @@
 
         <DockPanel Grid.Column="1" Grid.Row="1">
             <TextBox DockPanel.Dock="Top" Text="FolderNameHere" Visibility="Collapsed"/>
-            <TreeView DockPanel.Dock="Bottom" x:Name="treeView" Background="DarkGray" Focusable="False" ItemTemplate="{StaticResource MapTemplate}" 
-                      AllowDrop="True" ItemsSource="{Binding TreeData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <TreeView DockPanel.Dock="Bottom" x:Name="treeView" Background="DarkGray" Focusable="False" ItemTemplate="{StaticResource PathItemTemplate}"
+                      ItemContainerStyle="{StaticResource PathItemStyle}" AllowDrop="True" ItemsSource="{Binding TreeData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <i:Interaction.Triggers>
                     <i:EventTrigger EventName="SelectedItemChanged">
                         <i:InvokeCommandAction Command="{Binding HandleTreeSelectionChangedCommand}" PassEventArgsToCommand="True"/>

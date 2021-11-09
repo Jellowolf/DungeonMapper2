@@ -62,6 +62,7 @@ namespace DungeonMapper2.ViewModels
         private RelayCommand _handleTreeMouseDownCommand;
         private RelayCommand _handleTreeMouseMoveCommand;
         private RelayCommand _handleTreeDropCommand;
+        private RelayCommand _handleWidowClosingCommand;
 
         public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(o => HandleMapKeyDown((KeyEventArgs)o), o => true);
 
@@ -79,6 +80,8 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand HandleTreeDropCommand => _handleTreeDropCommand ??= new RelayCommand(o => HandleTreeDrop((DragEventArgs)o), o => true);
 
+        public RelayCommand HandleWidowClosingCommand => _handleWidowClosingCommand ??= new RelayCommand(o => HandleWindowClosing(), o => true);
+
         #endregion
 
         public DungeonMapperViewModel(Action<Map> printAction)
@@ -86,19 +89,11 @@ namespace DungeonMapper2.ViewModels
             _printMap = printAction;
             DatabaseManager.InitializeDatabase();
             _maps = MapDataAccess.GetMaps();
-            if (_maps.Any())
-            {
-                _currentMap = _maps.First();
-                _currentMap.LoadData();
-                MapName = _currentMap.Name;
-            }
-            else
-            {
-                _currentMap = new Map();
-                _currentMap.Initialize();
-            }
             TreeData = new ObservableCollection<IPathItem>(BuildTreeData());
-            _printMap(_currentMap);
+
+            // I might just want to save the IsExpanded and IsSelected states in general, but for now flipping back to the user's last map seems reasonable
+            var currentMapId = SettingDataAccess.GetSetting<int?>(Setting.CurrentMapId);
+            SetPathItemInTreeData<Map>(currentMapId, true);
         }
 
         private List<IPathItem> BuildTreeData()
@@ -192,19 +187,24 @@ namespace DungeonMapper2.ViewModels
             if (!(e.NewValue.GetType() == typeof(Map)))
                 return;
             if (e.NewValue != null && e.NewValue != e.OldValue)
+                ChangeMaps((Map)e.NewValue);
+        }
+
+        private void ChangeMaps(Map map)
+        {
+            if (map == null)
+                return;
+            if (AutoSaveEnabled)
             {
-                if (AutoSaveEnabled)
-                {
-                    var mapExisted = _currentMap.Id.HasValue;
-                    _currentMap.Name = MapName;
-                    _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
-                    if (!mapExisted) _maps.Add(_currentMap);
-                }
-                _currentMap = (Map)e.NewValue;
-                _currentMap.LoadData();
-                MapName = _currentMap.Name;
-                _printMap(_currentMap);
+                var mapExisted = _currentMap.Id.HasValue;
+                _currentMap.Name = MapName;
+                _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
+                if (!mapExisted) _maps.Add(_currentMap);
             }
+            _currentMap = map;
+            _currentMap.LoadData();
+            MapName = _currentMap.Name;
+            _printMap(_currentMap);
         }
 
         private void HandleTreeMouseDown(MouseButtonEventArgs e)
@@ -292,7 +292,7 @@ namespace DungeonMapper2.ViewModels
             }
         }
 
-        // I should probably just add a full folder parent to the Map class, but I'm still thinking on that, I haven't come up with a great implementation for it yet 
+        // I should probably just add a full folder parent to the Map class, but I'm still thinking on that, I haven't come up with a great implementation for it yet
         private IPathItem FindPathItemParent(IPathItem item)
         {
             var parentId = (item as Folder)?.Parent?.Id ?? (item as Map)?.FolderId;
@@ -305,7 +305,7 @@ namespace DungeonMapper2.ViewModels
 
             IPathItem FindParentInItemOrChildren(IPathItem item)
             {
-                if (item.Id == parentId)
+                if (item.GetType() == typeof(Folder) && item.Id == parentId)
                     return item;
                 if (item.ChildItems == null || !item.ChildItems.Any())
                     return null;
@@ -314,6 +314,40 @@ namespace DungeonMapper2.ViewModels
                     childMatch ??= FindParentInItemOrChildren(dataItem);
                 return childMatch;
             }
+        }
+
+        private void SetPathItemInTreeData<T>(int? itemId, bool OpenPath)
+        {
+            if (itemId == null)
+                return;
+            IPathItem match = null;
+            foreach (var dataItem in TreeData)
+                match ??= FindInItemOrChildren(dataItem);
+
+            if (match != null)
+            {
+                match.IsSelected = true;
+                ChangeMaps(match as Map);
+            }
+
+            IPathItem FindInItemOrChildren(IPathItem childItem)
+            {
+                if (childItem.GetType() == typeof(T) && itemId == childItem.Id)
+                    return childItem;
+                if (childItem.ChildItems == null || !childItem.ChildItems.Any())
+                    return null;
+                IPathItem childMatch = null;
+                foreach (var dataItem in childItem.ChildItems)
+                    childMatch ??= FindInItemOrChildren(dataItem);
+                if (OpenPath && childMatch != null)
+                    childItem.IsExpanded = true;
+                return childMatch;
+            }
+        }
+
+        private void HandleWindowClosing()
+        {
+            SettingDataAccess.SaveSetting(Setting.CurrentMapId, _currentMap?.Id);
         }
     }
 }

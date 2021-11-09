@@ -58,6 +58,15 @@ namespace DungeonMapper2.DataAccess
 
             command = new SqliteCommand(sql, database);
             command.ExecuteNonQuery();
+
+            sql =
+                @"CREATE TABLE Setting (
+                        Id INTEGER PRIMARY KEY,
+                        Value VARCHAR(256) NULL
+                )";
+
+            command = new SqliteCommand(sql, database);
+            command.ExecuteNonQuery();
         }
 
         public static SqliteConnection GetDatabaseConnection()
