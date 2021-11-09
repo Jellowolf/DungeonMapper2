@@ -7,10 +7,7 @@ namespace DungeonMapper2.Utilities
     {
         public Visual VisualElement { get; set; }
 
-        protected override int VisualChildrenCount
-        {
-            get { return VisualElement != null ? 1 : 0; }
-        }
+        protected override int VisualChildrenCount => VisualElement != null ? 1 : 0;
 
         protected override Visual GetVisualChild(int index)
         {

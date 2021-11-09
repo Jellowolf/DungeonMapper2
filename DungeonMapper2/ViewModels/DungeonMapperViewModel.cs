@@ -13,10 +13,10 @@ namespace DungeonMapper2.ViewModels
 {
     public class DungeonMapperViewModel : DependencyObject
     {
-        private Action<Map> PrintMap;
-        private List<Map> Maps;
-        private Map CurrentMap;
-        private Point DragPositionStart;
+        private readonly Action<Map> _printMap;
+        private readonly List<Map> _maps;
+        private Map _currentMap;
+        private Point _dragPositionStart;
 
         #region Dependency Properties
 
@@ -118,29 +118,29 @@ namespace DungeonMapper2.ViewModels
 
         public DungeonMapperViewModel(Action<Map> printAction)
         {
-            PrintMap = printAction;
+            _printMap = printAction;
             DatabaseManager.InitializeDatabase();
-            Maps = MapDataAccess.GetMaps();
-            if (Maps.Any())
+            _maps = MapDataAccess.GetMaps();
+            if (_maps.Any())
             {
-                CurrentMap = Maps.First();
-                CurrentMap.LoadData();
-                MapName = CurrentMap.Name;
+                _currentMap = _maps.First();
+                _currentMap.LoadData();
+                MapName = _currentMap.Name;
             }
             else
             {
-                CurrentMap = new Map();
-                CurrentMap.Initialize();
+                _currentMap = new Map();
+                _currentMap.Initialize();
             }
             TreeData = new ObservableCollection<IPathItem>(BuildTreeData());
-            PrintMap(CurrentMap);
+            _printMap(_currentMap);
         }
 
         private List<IPathItem> BuildTreeData()
         {
             var maps = MapDataAccess.GetMaps();
             var data = new List<IPathItem>();
-            data.AddRange(FolderDataAccess.GetFolders(Maps));
+            data.AddRange(FolderDataAccess.GetFolders(_maps));
             data.AddRange(maps.Where(map => !map.FolderId.HasValue));
             return data;
         }
@@ -152,114 +152,114 @@ namespace DungeonMapper2.ViewModels
 
             if (args.Key == Key.H)
             {
-                CurrentMap.HallMode = !(CurrentMap.HallMode);
+                _currentMap.HallMode = !(_currentMap.HallMode);
                 return;
             }
 
             if (args.Key == Key.D)
             {
-                CurrentMap.ClearCurrentTile();
-                PrintMap(CurrentMap);
+                _currentMap.ClearCurrentTile();
+                _printMap(_currentMap);
                 return;
             }
 
             if (args.Key == Key.T)
             {
-                CurrentMap.MarkTravel();
-                PrintMap(CurrentMap);
+                _currentMap.MarkTravel();
+                _printMap(_currentMap);
                 return;
             }
 
             if (args.Key == Key.Up && !(shiftDown || ctrlDown))
-                CurrentMap.MoveUp();
+                _currentMap.MoveUp();
             if (args.Key == Key.Down && !(shiftDown || ctrlDown))
-                CurrentMap.MoveDown();
+                _currentMap.MoveDown();
             if (args.Key == Key.Left && !(shiftDown || ctrlDown))
-                CurrentMap.MoveLeft();
+                _currentMap.MoveLeft();
             if (args.Key == Key.Right && !(shiftDown || ctrlDown))
-                CurrentMap.MoveRight();
+                _currentMap.MoveRight();
 
             if (args.Key == Key.Up && ctrlDown)
-                CurrentMap.SetTileWall(Wall.Up);
+                _currentMap.SetTileWall(Wall.Up);
             if (args.Key == Key.Down && ctrlDown)
-                CurrentMap.SetTileWall(Wall.Down);
+                _currentMap.SetTileWall(Wall.Down);
             if (args.Key == Key.Left && ctrlDown)
-                CurrentMap.SetTileWall(Wall.Left);
+                _currentMap.SetTileWall(Wall.Left);
             if (args.Key == Key.Right && ctrlDown)
-                CurrentMap.SetTileWall(Wall.Right);
+                _currentMap.SetTileWall(Wall.Right);
 
             if (args.Key == Key.Up && shiftDown)
-                CurrentMap.SetTileDoor(Wall.Up);
+                _currentMap.SetTileDoor(Wall.Up);
             if (args.Key == Key.Down && shiftDown)
-                CurrentMap.SetTileDoor(Wall.Down);
+                _currentMap.SetTileDoor(Wall.Down);
             if (args.Key == Key.Left && shiftDown)
-                CurrentMap.SetTileDoor(Wall.Left);
+                _currentMap.SetTileDoor(Wall.Left);
             if (args.Key == Key.Right && shiftDown)
-                CurrentMap.SetTileDoor(Wall.Right);
+                _currentMap.SetTileDoor(Wall.Right);
 
-            PrintMap(CurrentMap);
+            _printMap(_currentMap);
         }
 
         private void SaveCurrentMap()
         {
-            CurrentMap.Name = MapName;
-            CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
-            if (!Maps.Any()) Maps.Add(CurrentMap);
+            _currentMap.Name = MapName;
+            _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
+            if (!_maps.Any()) _maps.Add(_currentMap);
         }
 
         private void DeleteCurrentMap()
         {
-            MapDataAccess.DeleteMap(CurrentMap);
-            Maps.Remove(CurrentMap);
-            CurrentMap = Maps.First();
-            PrintMap(CurrentMap);
+            MapDataAccess.DeleteMap(_currentMap);
+            _maps.Remove(_currentMap);
+            _currentMap = _maps.First();
+            _printMap(_currentMap);
         }
 
         private void ClearCurrentMap()
         {
-            foreach (var tile in CurrentMap.mapData.SelectMany(tileArray => tileArray).Where(tile => tile != null && tile.Traveled))
+            foreach (var tile in _currentMap.MapData.SelectMany(tileArray => tileArray).Where(tile => tile != null && tile.Traveled))
                 tile.Clear();
-            PrintMap(CurrentMap);
+            _printMap(_currentMap);
         }
 
         private void MoveToPreviousMap()
         {
-            if (CurrentMap == Maps.First())
+            if (_currentMap == _maps.First())
                 return;
             if (AutoSaveEnabled)
             {
-                CurrentMap.Name = MapName;
-                CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
+                _currentMap.Name = MapName;
+                _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
             }
-            CurrentMap = Maps.ElementAt(Maps.IndexOf(CurrentMap) - 1);
-            MapName = CurrentMap.Name;
-            PrintMap(CurrentMap);
+            _currentMap = _maps.ElementAt(_maps.IndexOf(_currentMap) - 1);
+            MapName = _currentMap.Name;
+            _printMap(_currentMap);
         }
 
         private void MoveToNextMap()
         {
             if (AutoSaveEnabled)
             {
-                CurrentMap.Name = MapName;
-                CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
-                if (!Maps.Any()) Maps.Add(CurrentMap);
+                _currentMap.Name = MapName;
+                _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
+                if (!_maps.Any()) _maps.Add(_currentMap);
             }
-            if (CurrentMap == Maps.Last())
+            if (_currentMap == _maps.Last())
             {
-                Maps.Add(new Map());
-                CurrentMap = Maps.Last();
+                _maps.Add(new Map());
+                _currentMap = _maps.Last();
             }
             else
-                CurrentMap = Maps.ElementAt(Maps.IndexOf(CurrentMap) + 1);
-            if (CurrentMap.mapData == null)
+                _currentMap = _maps.ElementAt(_maps.IndexOf(_currentMap) + 1);
+            if (_currentMap.MapData == null)
             {
-                if (CurrentMap.Id.HasValue)
-                    CurrentMap.LoadData();
+                if (_currentMap.Id.HasValue)
+                    _currentMap.LoadData();
                 else
-                    CurrentMap.Initialize();
+                    _currentMap.Initialize();
             }
-            MapName = CurrentMap.Name;
-            PrintMap(CurrentMap);
+            MapName = _currentMap.Name;
+            _printMap(_currentMap);
         }
 
         private void HandleTreeSelectionChanged(RoutedPropertyChangedEventArgs<object> e)
@@ -270,21 +270,21 @@ namespace DungeonMapper2.ViewModels
             {
                 if (AutoSaveEnabled)
                 {
-                    var mapExisted = CurrentMap.Id.HasValue;
-                    CurrentMap.Name = MapName;
-                    CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
-                    if (!mapExisted) Maps.Add(CurrentMap);
+                    var mapExisted = _currentMap.Id.HasValue;
+                    _currentMap.Name = MapName;
+                    _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
+                    if (!mapExisted) _maps.Add(_currentMap);
                 }
-                CurrentMap = (Map)e.NewValue;
-                CurrentMap.LoadData();
-                MapName = CurrentMap.Name;
-                PrintMap(CurrentMap);
+                _currentMap = (Map)e.NewValue;
+                _currentMap.LoadData();
+                MapName = _currentMap.Name;
+                _printMap(_currentMap);
             }
         }
 
         private void HandleTreeMouseDown(MouseButtonEventArgs e)
         {
-            DragPositionStart = e.GetPosition(null);
+            _dragPositionStart = e.GetPosition(null);
         }
 
         private void HandleTreeMouseMove(MouseEventArgs e)
@@ -292,7 +292,7 @@ namespace DungeonMapper2.ViewModels
             if (e.LeftButton == MouseButtonState.Pressed)
             {
                 var currentPosition = e.GetPosition(null);
-                var positionDifference = DragPositionStart - currentPosition;
+                var positionDifference = _dragPositionStart - currentPosition;
                 if (Math.Abs(positionDifference.X) > SystemParameters.MinimumHorizontalDragDistance ||
                     Math.Abs(positionDifference.Y) > SystemParameters.MinimumVerticalDragDistance)
                 {
@@ -300,7 +300,7 @@ namespace DungeonMapper2.ViewModels
                     var treeViewItem = ((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem;
                     if (treeViewItem == null)
                         return;
-                    DragDrop.DoDragDrop(treeViewItem, CurrentMap, DragDropEffects.Move);
+                    DragDrop.DoDragDrop(treeViewItem, _currentMap, DragDropEffects.Move);
                 }
 
             }

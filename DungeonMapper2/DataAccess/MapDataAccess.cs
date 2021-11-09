@@ -21,8 +21,8 @@ namespace DungeonMapper2.DataAccess
                 while (reader.Read()) { mapId = reader.GetInt32(0); }
             if (!mapId.HasValue)
                 throw new Exception("Failed to create Map and return an Id.");
-            TileDataAccess.SaveTiles(mapId.Value, map.mapData);
-            map.mapData = TileDataAccess.GetTiles(mapId.Value);
+            TileDataAccess.SaveTiles(mapId.Value, map.MapData);
+            map.MapData = TileDataAccess.GetTiles(mapId.Value);
             return mapId.Value;
         }
 
