@@ -12,7 +12,7 @@ namespace DungeonMapper2.DataAccess
             int? mapId = map.Id;
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
-            var sql = @$"INSERT INTO Map (Id, Name, PositionX, PositionY, FolderId) VALUES ({(map.Id.HasValue ? map.Id.ToString() : "NULL")}, '{map.Name}', {map.Position.x}, {map.Position.y}, {(map.FolderId.HasValue ? map.Id.ToString() : "NULL")})
+            var sql = @$"INSERT INTO Map (Id, Name, PositionX, PositionY, FolderId) VALUES ({(map.Id.HasValue ? map.Id.ToString() : "NULL")}, '{map.Name}', {map.Position.x}, {map.Position.y}, {(map.FolderId.HasValue ? map.FolderId.ToString() : "NULL")})
                 ON CONFLICT(Id) DO UPDATE SET Name = excluded.Name, PositionX = excluded.PositionX, PositionY = excluded.PositionY, FolderId = excluded.FolderId;
                 SELECT LAST_INSERT_ROWID()";
             var command = new SqliteCommand(sql, database);

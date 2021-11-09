@@ -1,11 +1,14 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace DungeonMapper2.Models
 {
-    public interface IPathItem
+    public interface IPathItem : INotifyPropertyChanged
     {
+        int? Id { get; set; }
+
         string Name { get; set; }
 
-        List<IPathItem> ChildItems { get; set; }
+        ObservableCollection<IPathItem> ChildItems { get; set; }
     }
 }

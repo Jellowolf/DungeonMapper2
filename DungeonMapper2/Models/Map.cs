@@ -15,8 +15,6 @@ namespace DungeonMapper2.Models
         private readonly int _wallWidth;
         private readonly int _doorWidth;
 
-        public int? Id { get; set; }
-
         public (int x, int y) Position { get => _position; set => _position = value; }
 
         public int TileSize { get; set; }

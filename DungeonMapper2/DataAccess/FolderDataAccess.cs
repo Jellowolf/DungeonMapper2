@@ -2,6 +2,7 @@
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 
 namespace DungeonMapper2.DataAccess
@@ -49,12 +50,13 @@ namespace DungeonMapper2.DataAccess
             void PopulateChildItems(Folder folder, Folder parentFolder = null)
             {
                 folder.Parent = parentFolder;
-                folder.ChildItems = folderData.Where(data => data.parentId == folder.Id).Select(data => data.folder).ToList<IPathItem>();
-                if (folder.ChildItems.Any())
-                    foreach (var innerChildItem in folder.ChildItems)
+                var childItems = folderData.Where(data => data.parentId == folder.Id).Select(data => data.folder).ToList<IPathItem>();
+                if (childItems.Any())
+                    foreach (var innerChildItem in childItems)
                         PopulateChildItems((Folder)innerChildItem, (Folder)folder);
                 if (mapData != null)
-                    folder.ChildItems.AddRange(mapData.Where(map => map.FolderId == folder.Id));
+                    childItems.AddRange(mapData.Where(map => map.FolderId == folder.Id));
+                folder.ChildItems = new ObservableCollection<IPathItem>(childItems);
             }
 
             return folders;
