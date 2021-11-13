@@ -22,9 +22,38 @@ namespace DungeonMapper2.Models
 
         public ObservableCollection<IPathItem> ChildItems { get; set; }
 
-        public bool IsSelected { get; set; }
+        private bool _isSelected;
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                OnPropertyChanged(nameof(IsSelected));
+            }
+        }
 
-        public bool IsExpanded { get; set; }
+        private bool _isExpanded;
+        public bool IsExpanded
+        {
+            get => _isExpanded;
+            set
+            {
+                _isExpanded = value;
+                OnPropertyChanged(nameof(IsExpanded));
+            }
+        }
+
+        private bool _renameModeEnabled;
+        public bool RenameModeEnabled
+        {
+            get => _renameModeEnabled;
+            set
+            {
+                _renameModeEnabled = value;
+                OnPropertyChanged(nameof(RenameModeEnabled));
+            }
+        }
 
         protected void OnPropertyChanged(string propertyName)
         {

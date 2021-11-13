@@ -59,10 +59,13 @@ namespace DungeonMapper2.ViewModels
         private RelayCommand _deleteCurrentMapCommand;
         private RelayCommand _clearCurrentMapCommand;
         private RelayCommand _handleTreeSelectionChangedCommand;
-        private RelayCommand _handleTreeMouseDownCommand;
+        private RelayCommand _handleTreeLeftMouseDownCommand;
+        private RelayCommand _handleTreeRightMouseDownCommand;
         private RelayCommand _handleTreeMouseMoveCommand;
         private RelayCommand _handleTreeDropCommand;
         private RelayCommand _handleWidowClosingCommand;
+        private RelayCommand _startRenamePathItemCommand;
+        private RelayCommand _completeRenamePathItemCommand;
 
         public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(o => HandleMapKeyDown((KeyEventArgs)o), o => true);
 
@@ -74,13 +77,19 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand HandleTreeSelectionChangedCommand => _handleTreeSelectionChangedCommand ??= new RelayCommand(o => HandleTreeSelectionChanged((RoutedPropertyChangedEventArgs<object>)o), o => true);
 
-        public RelayCommand HandleTreeMouseDownCommand => _handleTreeMouseDownCommand ??= new RelayCommand(o => HandleTreeMouseDown((MouseButtonEventArgs)o), o => true);
+        public RelayCommand HandleTreeLeftMouseDownCommand => _handleTreeLeftMouseDownCommand ??= new RelayCommand(o => HandleTreeLeftMouseDown((MouseButtonEventArgs)o), o => true);
+
+        public RelayCommand HandleTreeRightMouseDownCommand => _handleTreeRightMouseDownCommand ??= new RelayCommand(o => HandleTreeRightMouseDown((MouseButtonEventArgs)o), o => true);
 
         public RelayCommand HandleTreeMouseMoveCommand => _handleTreeMouseMoveCommand ??= new RelayCommand(o => HandleTreeMouseMove((MouseEventArgs)o), o => true);
 
         public RelayCommand HandleTreeDropCommand => _handleTreeDropCommand ??= new RelayCommand(o => HandleTreeDrop((DragEventArgs)o), o => true);
 
         public RelayCommand HandleWidowClosingCommand => _handleWidowClosingCommand ??= new RelayCommand(o => HandleWindowClosing(), o => true);
+
+        public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => true);
+
+        public RelayCommand CompleteRenamePathItemCommand => _completeRenamePathItemCommand ??= new RelayCommand(o => CompleteRenamePathItem(), o => true);
 
         #endregion
 
@@ -207,9 +216,16 @@ namespace DungeonMapper2.ViewModels
             _printMap(_currentMap);
         }
 
-        private void HandleTreeMouseDown(MouseButtonEventArgs e)
+        private void HandleTreeLeftMouseDown(MouseButtonEventArgs e)
         {
             _dragPositionStart = e.GetPosition(null);
+        }
+
+        private void HandleTreeRightMouseDown(MouseButtonEventArgs e)
+        {
+            var selectedPathItem = (((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.DataContext as IPathItem;
+            if (selectedPathItem != null)
+                selectedPathItem.IsSelected = true;
         }
 
         private void HandleTreeMouseMove(MouseEventArgs e)
@@ -327,6 +343,7 @@ namespace DungeonMapper2.ViewModels
             if (match != null)
             {
                 match.IsSelected = true;
+                _selectedTreeItem = match;
                 ChangeMaps(match as Map);
             }
 
@@ -348,6 +365,20 @@ namespace DungeonMapper2.ViewModels
         private void HandleWindowClosing()
         {
             SettingDataAccess.SaveSetting(Setting.CurrentMapId, _currentMap?.Id);
+        }
+
+        private void StartRenamePathItem()
+        {
+            _selectedTreeItem.RenameModeEnabled = true;
+        }
+
+        private void CompleteRenamePathItem()
+        {
+            if (_selectedTreeItem is Folder)
+                FolderDataAccess.SaveFolder(_selectedTreeItem as Folder);
+            else if (_selectedTreeItem is Map)
+                MapDataAccess.SaveMap(_selectedTreeItem as Map);
+            _selectedTreeItem.RenameModeEnabled = false;
         }
     }
 }
