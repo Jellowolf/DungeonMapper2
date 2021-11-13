@@ -44,14 +44,14 @@ namespace DungeonMapper2.Models
             }
         }
 
-        private bool _renameModeEnabled;
-        public bool RenameModeEnabled
+        private bool _editModeEnabled;
+        public bool EditModeEnabled
         {
-            get => _renameModeEnabled;
+            get => _editModeEnabled;
             set
             {
-                _renameModeEnabled = value;
-                OnPropertyChanged(nameof(RenameModeEnabled));
+                _editModeEnabled = value;
+                OnPropertyChanged(nameof(EditModeEnabled));
             }
         }
 

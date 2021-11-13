@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DungeonMapper2"
         xmlns:utilities="clr-namespace:DungeonMapper2.Utilities"
+        xmlns:models="clr-namespace:DungeonMapper2.Models"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Dungeon Mapper 2" Height="750" Width="1000"
@@ -19,20 +20,20 @@
         <utilities:BooleanToVisibilityConverter Reverse="True" x:Key="InverseBooleanToVisibilityConverter"/>
         <HierarchicalDataTemplate x:Key="PathItemTemplate" ItemsSource="{Binding ChildItems}">
             <StackPanel>
-                <TextBlock Text="{Binding Path=Name}" Visibility="{Binding RenameModeEnabled, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="3,0,3,0"/>
+                <TextBlock Text="{Binding Path=Name}" Visibility="{Binding EditModeEnabled, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="3,0,3,0"/>
                 <TextBox x:Name="mapNameTextBox" Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
-                         Visibility="{Binding RenameModeEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="1,0,1,0">
+                         Visibility="{Binding EditModeEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="1,0,1,0">
                     <i:Interaction.Triggers>
                         <i:DataTrigger Binding="{Binding ElementName=mapNameTextBox, Path=Visibility}" Comparison="Equal" Value="Visible">
                             <utilities:SetFocusAction TargetObject="{Binding ElementName=mapNameTextBox}"/>
                             <i:CallMethodAction MethodName="SelectAll" TargetObject="{Binding ElementName=mapNameTextBox}"/>
                         </i:DataTrigger>
                         <i:EventTrigger EventName="LostFocus">
-                            <i:InvokeCommandAction Command="{Binding DataContext.CompleteRenamePathItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+                            <i:InvokeCommandAction Command="{Binding DataContext.CompleteEditPathItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
                         </i:EventTrigger>
                     </i:Interaction.Triggers>
                     <TextBox.InputBindings>
-                        <KeyBinding Key="Enter" Command="{Binding DataContext.CompleteRenamePathItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
+                        <KeyBinding Key="Enter" Command="{Binding DataContext.CompleteEditPathItemCommand, RelativeSource={RelativeSource Mode=FindAncestor, AncestorType={x:Type Window}}}"/>
                     </TextBox.InputBindings>
                 </TextBox>
             </StackPanel>
@@ -67,12 +68,12 @@
                       ItemContainerStyle="{StaticResource PathItemStyle}" AllowDrop="True" ItemsSource="{Binding TreeData, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
                 <TreeView.ContextMenu>
                     <ContextMenu>
-                        <MenuItem Header="Add">
-                            <MenuItem Header="Folder"/>
-                            <MenuItem Header="Map"/>
+                        <MenuItem Header="Add" IsEnabled="{Binding AddEnabled}">
+                            <MenuItem Header="Folder" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}"/>
+                            <MenuItem Header="Map" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}"/>
                         </MenuItem>
                         <MenuItem Header="Rename" Command="{Binding StartRenamePathItemCommand}"/>
-                        <MenuItem Header="Delete"/>
+                        <MenuItem Header="Delete" Command="{Binding DeletePathItemCommand}"/>
                     </ContextMenu>
                 </TreeView.ContextMenu>
                 <i:Interaction.Triggers>

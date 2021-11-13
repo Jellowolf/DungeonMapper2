@@ -18,10 +18,12 @@ namespace DungeonMapper2.ViewModels
         private Map _currentMap;
         private IPathItem _selectedTreeItem;
         private Point _dragPositionStart;
+        private bool _isrightClickPathItem;
 
         #region Dependency Properties
 
         public static readonly DependencyProperty AutoSaveEnabledProperty = DependencyProperty.Register("AutoSaveEnabled", typeof(bool), typeof(DungeonMapperViewModel));
+        public static readonly DependencyProperty AddEnabledProperty = DependencyProperty.Register("AddEnabled", typeof(bool), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty MapNameProperty = DependencyProperty.Register("MapName", typeof(string), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty MapCanvasProperty = DependencyProperty.Register("MapCanvas", typeof(Canvas), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty TreeDataProperty = DependencyProperty.Register("TreeData", typeof(ObservableCollection<IPathItem>), typeof(DungeonMapperViewModel));
@@ -30,6 +32,12 @@ namespace DungeonMapper2.ViewModels
         {
             get => (bool)GetValue(AutoSaveEnabledProperty);
             set => SetValue(AutoSaveEnabledProperty, value);
+        }
+
+        public bool AddEnabled
+        {
+            get => (bool)GetValue(AddEnabledProperty);
+            set => SetValue(AddEnabledProperty, value);
         }
 
         public string MapName
@@ -64,8 +72,10 @@ namespace DungeonMapper2.ViewModels
         private RelayCommand _handleTreeMouseMoveCommand;
         private RelayCommand _handleTreeDropCommand;
         private RelayCommand _handleWidowClosingCommand;
+        private RelayCommand _startAddPathItemCommand;
         private RelayCommand _startRenamePathItemCommand;
-        private RelayCommand _completeRenamePathItemCommand;
+        private RelayCommand _completeEditPathItemCommand;
+        private RelayCommand _deletePathItemCommand;
 
         public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(o => HandleMapKeyDown((KeyEventArgs)o), o => true);
 
@@ -87,9 +97,13 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand HandleWidowClosingCommand => _handleWidowClosingCommand ??= new RelayCommand(o => HandleWindowClosing(), o => true);
 
+        public RelayCommand StartAddPathItemCommand => _startAddPathItemCommand ??= new RelayCommand(o => StartAddPathItem((PathItemType)o), o => true);
+
         public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => true);
 
-        public RelayCommand CompleteRenamePathItemCommand => _completeRenamePathItemCommand ??= new RelayCommand(o => CompleteRenamePathItem(), o => true);
+        public RelayCommand CompleteEditPathItemCommand => _completeEditPathItemCommand ??= new RelayCommand(o => CompleteEditPathItem(), o => true);
+
+        public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => true);
 
         #endregion
 
@@ -193,7 +207,7 @@ namespace DungeonMapper2.ViewModels
         private void HandleTreeSelectionChanged(RoutedPropertyChangedEventArgs<object> e)
         {
             _selectedTreeItem = e.NewValue as IPathItem;
-            if (!(e.NewValue.GetType() == typeof(Map)))
+            if (!(e.NewValue is Map))
                 return;
             if (e.NewValue != null && e.NewValue != e.OldValue)
                 ChangeMaps((Map)e.NewValue);
@@ -224,8 +238,9 @@ namespace DungeonMapper2.ViewModels
         private void HandleTreeRightMouseDown(MouseButtonEventArgs e)
         {
             var selectedPathItem = (((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.DataContext as IPathItem;
-            if (selectedPathItem != null)
+            if (_isrightClickPathItem = selectedPathItem != null)
                 selectedPathItem.IsSelected = true;
+            AddEnabled = selectedPathItem is not Map;
         }
 
         private void HandleTreeMouseMove(MouseEventArgs e)
@@ -258,7 +273,7 @@ namespace DungeonMapper2.ViewModels
                 return;
             var destinationFolder = destinationItem as Folder;
 
-            if (sourceItem.GetType() == typeof(Folder))
+            if (sourceItem is Folder)
             {
                 var sourceFolder = sourceItem as Folder;
 
@@ -280,7 +295,7 @@ namespace DungeonMapper2.ViewModels
 
                 FolderDataAccess.SaveFolder(sourceFolder);
             }
-            else if (sourceItem.GetType() == typeof(Map))
+            else if (sourceItem is Map)
             {
                 var sourceMap = sourceItem as Map;
 
@@ -321,7 +336,7 @@ namespace DungeonMapper2.ViewModels
 
             IPathItem FindParentInItemOrChildren(IPathItem item)
             {
-                if (item.GetType() == typeof(Folder) && item.Id == parentId)
+                if (item is Folder && item.Id == parentId)
                     return item;
                 if (item.ChildItems == null || !item.ChildItems.Any())
                     return null;
@@ -349,7 +364,7 @@ namespace DungeonMapper2.ViewModels
 
             IPathItem FindInItemOrChildren(IPathItem childItem)
             {
-                if (childItem.GetType() == typeof(T) && itemId == childItem.Id)
+                if (childItem is T && itemId == childItem.Id)
                     return childItem;
                 if (childItem.ChildItems == null || !childItem.ChildItems.Any())
                     return null;
@@ -369,16 +384,51 @@ namespace DungeonMapper2.ViewModels
 
         private void StartRenamePathItem()
         {
-            _selectedTreeItem.RenameModeEnabled = true;
+            _selectedTreeItem.EditModeEnabled = true;
         }
 
-        private void CompleteRenamePathItem()
+        private void StartAddPathItem(PathItemType type)
         {
+            IPathItem newItem = null;
+
+            if (type == PathItemType.Folder)
+                newItem = new Folder { Parent = _isrightClickPathItem ? (Folder)_selectedTreeItem : null };
+            else if (type == PathItemType.Map)
+            {
+                newItem = new Map { FolderId = _isrightClickPathItem ? _selectedTreeItem.Id : null };
+                ((Map)newItem).Initialize();
+            }
+
+            newItem.IsSelected = newItem.EditModeEnabled = true;
+
+            if (_isrightClickPathItem)
+            {
+                _selectedTreeItem.ChildItems ??= new ObservableCollection<IPathItem>();
+                _selectedTreeItem.ChildItems.Add(newItem);
+                _selectedTreeItem.IsExpanded = true;
+            }
+            else
+            {
+                TreeData.Add(newItem);
+            }
+
+            _selectedTreeItem = newItem;
+        }
+
+        private void CompleteEditPathItem()
+        {
+            if (_selectedTreeItem == null || !_selectedTreeItem.EditModeEnabled)
+                return;
             if (_selectedTreeItem is Folder)
-                FolderDataAccess.SaveFolder(_selectedTreeItem as Folder);
+                _selectedTreeItem.Id = FolderDataAccess.SaveFolder(_selectedTreeItem as Folder);
             else if (_selectedTreeItem is Map)
-                MapDataAccess.SaveMap(_selectedTreeItem as Map);
-            _selectedTreeItem.RenameModeEnabled = false;
+                _selectedTreeItem.Id = MapDataAccess.SaveMap(_selectedTreeItem as Map);
+            _selectedTreeItem.EditModeEnabled = false;
+        }
+
+        private void DeletePathItem()
+        {
+            //TODO
         }
     }
 }
