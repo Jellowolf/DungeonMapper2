@@ -9,7 +9,7 @@
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Dungeon Mapper 2" Height="750" Width="1000"
-        Background="DarkGray">
+        Background="DarkGray" Icon="../Resources/DungeonMapper2Icon.ico">
     <i:Interaction.Triggers>
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding HandleWidowClosingCommand}"/>
@@ -44,13 +44,18 @@
             <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
             <Setter Property="IsExpanded" Value="{Binding Path=IsExpanded, Mode=TwoWay}"/>
         </Style>
-        <Style x:Key="MainToolBarIcon" TargetType="TextBlock">
+        <Style x:Key="ToolBarIcon" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+        </Style>
+        <Style x:Key="MainToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
             <Setter Property="FontSize" Value="16"/>
         </Style>
-        <Style x:Key="TreeToolBarIcon" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+        <Style x:Key="TreeToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
             <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="ContextMenuIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </Window.Resources>
     <Grid x:Name="mainGrid">
@@ -101,11 +106,30 @@
                 <TreeView.ContextMenu>
                     <ContextMenu>
                         <MenuItem Header="Add" IsEnabled="{Binding AddEnabled}">
-                            <MenuItem Header="Folder" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}"/>
-                            <MenuItem Header="Map" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}"/>
+                            <MenuItem.Icon>
+                                <TextBlock Text="&#xE710;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                            </MenuItem.Icon>
+                            <MenuItem Header="Folder" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}">
+                                <MenuItem.Icon>
+                                    <TextBlock Text="&#xE8F4;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
+                            <MenuItem Header="Map" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}">
+                                <MenuItem.Icon>
+                                    <TextBlock Text="&#xE710;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                </MenuItem.Icon>
+                            </MenuItem>
                         </MenuItem>
-                        <MenuItem Header="Rename" Command="{Binding StartRenamePathItemCommand}"/>
-                        <MenuItem Header="Delete" Command="{Binding DeletePathItemCommand}"/>
+                        <MenuItem Header="Rename" Command="{Binding StartRenamePathItemCommand}">
+                            <MenuItem.Icon>
+                                <TextBlock Text="&#xE8AC;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
+                        <MenuItem Header="Delete" Command="{Binding DeletePathItemCommand}">
+                            <MenuItem.Icon>
+                                <TextBlock Text="&#xE74D;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                            </MenuItem.Icon>
+                        </MenuItem>
                     </ContextMenu>
                 </TreeView.ContextMenu>
                 <i:Interaction.Triggers>
