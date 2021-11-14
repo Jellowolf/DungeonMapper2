@@ -77,11 +77,11 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(eventArgs => HandleMapKeyDown((KeyEventArgs)eventArgs), o => true);
 
-        public RelayCommand SaveCurrentMapCommand => _saveCurrentMapCommand ??= new RelayCommand(o => SaveCurrentMap(), o => true);
+        public RelayCommand SaveCurrentMapCommand => _saveCurrentMapCommand ??= new RelayCommand(o => SaveCurrentMap(), o => CurrentMap != null);
 
-        public RelayCommand DeleteCurrentMapCommand => _deleteCurrentMapCommand ??= new RelayCommand(o => DeleteCurrentMap(), o => true);
+        public RelayCommand DeleteCurrentMapCommand => _deleteCurrentMapCommand ??= new RelayCommand(o => DeleteCurrentMap(), o => CurrentMap != null && CurrentMap.Id.HasValue);
 
-        public RelayCommand ClearCurrentMapCommand => _clearCurrentMapCommand ??= new RelayCommand(o => ClearCurrentMap(), o => true);
+        public RelayCommand ClearCurrentMapCommand => _clearCurrentMapCommand ??= new RelayCommand(o => ClearCurrentMap(), o => CurrentMap != null && CurrentMap.Id.HasValue);
 
         public RelayCommand HandleTreeSelectionChangedCommand => _handleTreeSelectionChangedCommand ??= new RelayCommand(eventArgs => HandleTreeSelectionChanged((RoutedPropertyChangedEventArgs<object>)eventArgs), o => true);
 

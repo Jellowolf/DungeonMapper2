@@ -2,7 +2,11 @@
 using DungeonMapper2.ViewModels;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Shapes;
 
 namespace DungeonMapper2.Views
 {
@@ -45,6 +49,30 @@ namespace DungeonMapper2.Views
                 splitterColumn.Width = new GridLength(PreviousSplitterWidth, GridUnitType.Pixel);
                 gridSplitter.IsEnabled = true;
             }
+        }
+
+        // this isn't awesome, but I'm a little lazy on making a full custom toolbar style
+        private void SetToolBarTemplateBackground(object sender, RoutedEventArgs e)
+        {
+            var toolBar = e.OriginalSource as ToolBar;
+            var toggleButton = toolBar?.Template.FindName("OverflowButton", toolBar) as ToggleButton;
+            if (toggleButton != null)
+                toggleButton.Background = toolBar.Background;
+            var overflowPanel = toolBar?.Template.FindName("ToolBarSubMenuBorder", toolBar) as Border;
+            if (overflowPanel != null)
+                overflowPanel.Background = toolBar.Background;
+
+            // Sets the Icon's shadow
+            var buttonIconBorder = VisualTreeHelper.GetChild(toggleButton, 0) as Border;
+            var buttonIconCanvas = buttonIconBorder.Child as Canvas;
+            foreach (Path path in buttonIconCanvas.Children)
+            {
+                if (path?.Fill == Brushes.White)
+                    path.Fill = Brushes.LightGray;
+                if (path?.Stroke == Brushes.White)
+                    path.Stroke = Brushes.LightGray;
+            }
+
         }
     }
 }
