@@ -14,8 +14,6 @@ namespace DungeonMapper2.ViewModels
     public class DungeonMapperViewModel : DependencyObject
     {
         private readonly Action<Map> _printMap;
-        private readonly List<Map> _maps;
-        private Map _currentMap;
         private IPathItem _selectedTreeItem;
         private Point _dragPositionStart;
         private bool _isrightClickPathItem;
@@ -24,9 +22,9 @@ namespace DungeonMapper2.ViewModels
 
         public static readonly DependencyProperty AutoSaveEnabledProperty = DependencyProperty.Register("AutoSaveEnabled", typeof(bool), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty AddEnabledProperty = DependencyProperty.Register("AddEnabled", typeof(bool), typeof(DungeonMapperViewModel));
-        public static readonly DependencyProperty MapNameProperty = DependencyProperty.Register("MapName", typeof(string), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty MapCanvasProperty = DependencyProperty.Register("MapCanvas", typeof(Canvas), typeof(DungeonMapperViewModel));
         public static readonly DependencyProperty TreeDataProperty = DependencyProperty.Register("TreeData", typeof(ObservableCollection<IPathItem>), typeof(DungeonMapperViewModel));
+        public static readonly DependencyProperty CurrentMapProperty = DependencyProperty.Register("CurrentMap", typeof(Map), typeof(DungeonMapperViewModel));
 
         public bool AutoSaveEnabled
         {
@@ -40,12 +38,6 @@ namespace DungeonMapper2.ViewModels
             set => SetValue(AddEnabledProperty, value);
         }
 
-        public string MapName
-        {
-            get => (string)GetValue(MapNameProperty);
-            set => SetValue(MapNameProperty, value);
-        }
-
         public Canvas MapCanvas
         {
             get => (Canvas)GetValue(MapCanvasProperty);
@@ -56,6 +48,12 @@ namespace DungeonMapper2.ViewModels
         {
             get => (ObservableCollection<IPathItem>)GetValue(TreeDataProperty);
             set => SetValue(TreeDataProperty, value);
+        }
+
+        public Map CurrentMap
+        {
+            get => (Map)GetValue(CurrentMapProperty);
+            set => SetValue(CurrentMapProperty, value);
         }
 
         #endregion
@@ -77,7 +75,7 @@ namespace DungeonMapper2.ViewModels
         private RelayCommand _completeEditPathItemCommand;
         private RelayCommand _deletePathItemCommand;
 
-        public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(o => HandleMapKeyDown((KeyEventArgs)o), o => true);
+        public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(eventArgs => HandleMapKeyDown((KeyEventArgs)eventArgs), o => true);
 
         public RelayCommand SaveCurrentMapCommand => _saveCurrentMapCommand ??= new RelayCommand(o => SaveCurrentMap(), o => true);
 
@@ -85,25 +83,25 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand ClearCurrentMapCommand => _clearCurrentMapCommand ??= new RelayCommand(o => ClearCurrentMap(), o => true);
 
-        public RelayCommand HandleTreeSelectionChangedCommand => _handleTreeSelectionChangedCommand ??= new RelayCommand(o => HandleTreeSelectionChanged((RoutedPropertyChangedEventArgs<object>)o), o => true);
+        public RelayCommand HandleTreeSelectionChangedCommand => _handleTreeSelectionChangedCommand ??= new RelayCommand(eventArgs => HandleTreeSelectionChanged((RoutedPropertyChangedEventArgs<object>)eventArgs), o => true);
 
-        public RelayCommand HandleTreeLeftMouseDownCommand => _handleTreeLeftMouseDownCommand ??= new RelayCommand(o => HandleTreeLeftMouseDown((MouseButtonEventArgs)o), o => true);
+        public RelayCommand HandleTreeLeftMouseDownCommand => _handleTreeLeftMouseDownCommand ??= new RelayCommand(eventArgs => HandleTreeLeftMouseDown((MouseButtonEventArgs)eventArgs), o => true);
 
-        public RelayCommand HandleTreeRightMouseDownCommand => _handleTreeRightMouseDownCommand ??= new RelayCommand(o => HandleTreeRightMouseDown((MouseButtonEventArgs)o), o => true);
+        public RelayCommand HandleTreeRightMouseDownCommand => _handleTreeRightMouseDownCommand ??= new RelayCommand(eventArgs => HandleTreeRightMouseDown((MouseButtonEventArgs)eventArgs), o => true);
 
-        public RelayCommand HandleTreeMouseMoveCommand => _handleTreeMouseMoveCommand ??= new RelayCommand(o => HandleTreeMouseMove((MouseEventArgs)o), o => true);
+        public RelayCommand HandleTreeMouseMoveCommand => _handleTreeMouseMoveCommand ??= new RelayCommand(eventArgs => HandleTreeMouseMove((MouseEventArgs)eventArgs), o => true);
 
-        public RelayCommand HandleTreeDropCommand => _handleTreeDropCommand ??= new RelayCommand(o => HandleTreeDrop((DragEventArgs)o), o => true);
+        public RelayCommand HandleTreeDropCommand => _handleTreeDropCommand ??= new RelayCommand(eventArgs => HandleTreeDrop((DragEventArgs)eventArgs), o => true);
 
         public RelayCommand HandleWidowClosingCommand => _handleWidowClosingCommand ??= new RelayCommand(o => HandleWindowClosing(), o => true);
 
-        public RelayCommand StartAddPathItemCommand => _startAddPathItemCommand ??= new RelayCommand(o => StartAddPathItem((PathItemType)o), o => true);
+        public RelayCommand StartAddPathItemCommand => _startAddPathItemCommand ??= new RelayCommand(itemType => StartAddPathItem((PathItemType)itemType), o => true);
 
-        public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => true);
+        public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => _isrightClickPathItem);
 
-        public RelayCommand CompleteEditPathItemCommand => _completeEditPathItemCommand ??= new RelayCommand(o => CompleteEditPathItem(), o => true);
+        public RelayCommand CompleteEditPathItemCommand => _completeEditPathItemCommand ??= new RelayCommand(o => CompleteEditPathItem(), editEnabled => (bool)editEnabled);
 
-        public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => true);
+        public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => _isrightClickPathItem);
 
         #endregion
 
@@ -111,7 +109,6 @@ namespace DungeonMapper2.ViewModels
         {
             _printMap = printAction;
             DatabaseManager.InitializeDatabase();
-            _maps = MapDataAccess.GetMaps();
             TreeData = new ObservableCollection<IPathItem>(BuildTreeData());
 
             // I might just want to save the IsExpanded and IsSelected states in general, but for now flipping back to the user's last map seems reasonable
@@ -121,9 +118,10 @@ namespace DungeonMapper2.ViewModels
 
         private List<IPathItem> BuildTreeData()
         {
+            var maps = MapDataAccess.GetMaps();
             var data = new List<IPathItem>();
-            data.AddRange(FolderDataAccess.GetFolders(_maps));
-            data.AddRange(_maps.Where(map => !map.FolderId.HasValue));
+            data.AddRange(FolderDataAccess.GetFolders(maps));
+            data.AddRange(maps.Where(map => !map.FolderId.HasValue));
             return data;
         }
 
@@ -134,74 +132,72 @@ namespace DungeonMapper2.ViewModels
 
             if (args.Key == Key.H)
             {
-                _currentMap.HallMode = !_currentMap.HallMode;
+                CurrentMap.HallMode = !CurrentMap.HallMode;
                 return;
             }
 
             if (args.Key == Key.D)
             {
-                _currentMap.ClearCurrentTile();
-                _printMap(_currentMap);
+                CurrentMap.ClearCurrentTile();
+                _printMap(CurrentMap);
                 return;
             }
 
             if (args.Key == Key.T)
             {
-                _currentMap.MarkTravel();
-                _printMap(_currentMap);
+                CurrentMap.MarkTravel();
+                _printMap(CurrentMap);
                 return;
             }
 
             if (args.Key == Key.Up && !(shiftDown || ctrlDown))
-                _currentMap.MoveUp();
+                CurrentMap.MoveUp();
             if (args.Key == Key.Down && !(shiftDown || ctrlDown))
-                _currentMap.MoveDown();
+                CurrentMap.MoveDown();
             if (args.Key == Key.Left && !(shiftDown || ctrlDown))
-                _currentMap.MoveLeft();
+                CurrentMap.MoveLeft();
             if (args.Key == Key.Right && !(shiftDown || ctrlDown))
-                _currentMap.MoveRight();
+                CurrentMap.MoveRight();
 
             if (args.Key == Key.Up && ctrlDown)
-                _currentMap.SetTileWall(Wall.Up);
+                CurrentMap.SetTileWall(Wall.Up);
             if (args.Key == Key.Down && ctrlDown)
-                _currentMap.SetTileWall(Wall.Down);
+                CurrentMap.SetTileWall(Wall.Down);
             if (args.Key == Key.Left && ctrlDown)
-                _currentMap.SetTileWall(Wall.Left);
+                CurrentMap.SetTileWall(Wall.Left);
             if (args.Key == Key.Right && ctrlDown)
-                _currentMap.SetTileWall(Wall.Right);
+                CurrentMap.SetTileWall(Wall.Right);
 
             if (args.Key == Key.Up && shiftDown)
-                _currentMap.SetTileDoor(Wall.Up);
+                CurrentMap.SetTileDoor(Wall.Up);
             if (args.Key == Key.Down && shiftDown)
-                _currentMap.SetTileDoor(Wall.Down);
+                CurrentMap.SetTileDoor(Wall.Down);
             if (args.Key == Key.Left && shiftDown)
-                _currentMap.SetTileDoor(Wall.Left);
+                CurrentMap.SetTileDoor(Wall.Left);
             if (args.Key == Key.Right && shiftDown)
-                _currentMap.SetTileDoor(Wall.Right);
+                CurrentMap.SetTileDoor(Wall.Right);
 
-            _printMap(_currentMap);
+            _printMap(CurrentMap);
         }
 
         private void SaveCurrentMap()
         {
-            _currentMap.Name = MapName;
-            _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
-            if (!_maps.Any()) _maps.Add(_currentMap);
+            CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
         }
 
         private void DeleteCurrentMap()
         {
-            MapDataAccess.DeleteMap(_currentMap);
-            _maps.Remove(_currentMap);
-            _currentMap = _maps.First();
-            _printMap(_currentMap);
+            MapDataAccess.DeleteMap(CurrentMap);
+            RemovePathItemFromParent(CurrentMap);
+            CurrentMap = null;
+            _printMap(null);
         }
 
         private void ClearCurrentMap()
         {
-            foreach (var tile in _currentMap.MapData.SelectMany(tileArray => tileArray).Where(tile => tile != null && tile.Traveled))
+            foreach (var tile in CurrentMap.MapData.SelectMany(tileArray => tileArray).Where(tile => tile != null && tile.Traveled))
                 tile.Clear();
-            _printMap(_currentMap);
+            _printMap(CurrentMap);
         }
 
         private void HandleTreeSelectionChanged(RoutedPropertyChangedEventArgs<object> e)
@@ -218,16 +214,10 @@ namespace DungeonMapper2.ViewModels
             if (map == null)
                 return;
             if (AutoSaveEnabled)
-            {
-                var mapExisted = _currentMap.Id.HasValue;
-                _currentMap.Name = MapName;
-                _currentMap.Id = MapDataAccess.SaveMap(_currentMap);
-                if (!mapExisted) _maps.Add(_currentMap);
-            }
-            _currentMap = map;
-            _currentMap.LoadData();
-            MapName = _currentMap.Name;
-            _printMap(_currentMap);
+                CurrentMap.Id = MapDataAccess.SaveMap(CurrentMap);
+            CurrentMap = map;
+            CurrentMap.LoadData();
+            _printMap(CurrentMap);
         }
 
         private void HandleTreeLeftMouseDown(MouseButtonEventArgs e)
@@ -277,10 +267,7 @@ namespace DungeonMapper2.ViewModels
             {
                 var sourceFolder = sourceItem as Folder;
 
-                if (sourceFolder.Parent?.Id == null)
-                    TreeData.Remove(sourceFolder);
-                else
-                    sourceFolder.Parent.ChildItems.Remove(sourceFolder);
+                RemovePathItemFromParent(sourceFolder);
 
                 if (destinationFolder == null)
                 {
@@ -299,14 +286,7 @@ namespace DungeonMapper2.ViewModels
             {
                 var sourceMap = sourceItem as Map;
 
-                if (sourceMap.FolderId == null)
-                    TreeData.Remove(sourceMap);
-                else
-                {
-                    var sourceMapParent = FindPathItemParent(sourceMap);
-                    if (sourceMapParent != null)
-                        sourceMapParent.ChildItems.Remove(sourceMap);
-                }
+                RemovePathItemFromParent(sourceMap);
 
                 if (destinationFolder == null)
                 {
@@ -379,7 +359,7 @@ namespace DungeonMapper2.ViewModels
 
         private void HandleWindowClosing()
         {
-            SettingDataAccess.SaveSetting(Setting.CurrentMapId, _currentMap?.Id);
+            SettingDataAccess.SaveSetting(Setting.CurrentMapId, CurrentMap?.Id);
         }
 
         private void StartRenamePathItem()
@@ -428,7 +408,25 @@ namespace DungeonMapper2.ViewModels
 
         private void DeletePathItem()
         {
-            //TODO
+            if (_selectedTreeItem is Map)
+            {
+                MapDataAccess.DeleteMap(_selectedTreeItem as Map);
+                _printMap(null);
+            }
+            else if (_selectedTreeItem is Folder)
+            {
+                FolderDataAccess.DeleteFolderAndChildren(_selectedTreeItem as Folder);
+            }
+            RemovePathItemFromParent(_selectedTreeItem);
+            _selectedTreeItem = null;
+        }
+
+        private void RemovePathItemFromParent(IPathItem item)
+        {
+            if (((item as Folder)?.Parent?.Id ?? (item as Map)?.FolderId) == null)
+                TreeData.Remove(item);
+            else
+                ((item as Folder)?.Parent ?? FindPathItemParent(item)).ChildItems.Remove(item);
         }
     }
 }

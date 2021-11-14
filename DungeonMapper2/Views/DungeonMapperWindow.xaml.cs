@@ -23,6 +23,8 @@ namespace DungeonMapper2.Views
         private void PrintMap(Map map)
         {
             canvas.Children.Clear();
+            if (map == null)
+                return;
             canvas.Height = map.MaxIndexY * map.TileSize;
             canvas.Width = map.MaxIndexX * map.TileSize;
             canvas.Children.Add(map.PrintToHost());

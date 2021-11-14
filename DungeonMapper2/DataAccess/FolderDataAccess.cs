@@ -61,5 +61,29 @@ namespace DungeonMapper2.DataAccess
 
             return folders;
         }
+
+        public static void DeleteFolderAndChildren(Folder folder) => DeleteSelfAndChildItems(folder);
+
+        private static void DeleteSelfAndChildItems(IPathItem pathItem)
+        {
+            if (pathItem.ChildItems != null && pathItem.ChildItems.Any())
+            {
+                foreach (var child in pathItem.ChildItems)
+                    DeleteSelfAndChildItems(child);
+            }
+            if (pathItem is Folder)
+                DeleteFolder(pathItem as Folder);
+            else if (pathItem is Map)
+                MapDataAccess.DeleteMap(pathItem as Map);
+        }
+
+        private static void DeleteFolder(Folder folder)
+        {
+            using var database = DatabaseManager.GetDatabaseConnection();
+            database.Open();
+            var sql = $"DELETE FROM Folder WHERE Id = {folder.Id}";
+            var command = new SqliteCommand(sql, database);
+            command.ExecuteNonQuery();
+        }
     }
 }

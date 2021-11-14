@@ -10,7 +10,7 @@ namespace DungeonMapper2.DataAccess
         {
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
-            var sql = @$"INSERT INTO Setting (Id, Value) VALUES ({(int)setting}, '{(value == null ? "NULL" : value)}')
+            var sql = @$"INSERT INTO Setting (Id, Value) VALUES ({(int)setting}, {(value == null ? "NULL" : $"'{value}'")})
                 ON CONFLICT(Id) DO UPDATE SET Value = excluded.Value";
             var command = new SqliteCommand(sql, database);
             command.ExecuteNonQuery();
@@ -25,7 +25,7 @@ namespace DungeonMapper2.DataAccess
             var command = new SqliteCommand(sql, database);
             using var reader = command.ExecuteReader();
             string dbValue = null;
-            while (reader.Read()) { dbValue = reader.GetString(0); }
+            while (reader.Read()) { dbValue = !reader.IsDBNull(0) ? reader.GetString(0) : null; }
             return dbValue != null ? (T)Convert.ChangeType(dbValue, Nullable.GetUnderlyingType(typeof(T)) ?? typeof(T)) : default;
         }
     }

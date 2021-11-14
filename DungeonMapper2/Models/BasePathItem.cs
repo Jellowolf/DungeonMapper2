@@ -20,7 +20,16 @@ namespace DungeonMapper2.Models
             }
         }
 
-        public ObservableCollection<IPathItem> ChildItems { get; set; }
+        private ObservableCollection<IPathItem> _childItems;
+        public ObservableCollection<IPathItem> ChildItems
+        {
+            get => _childItems;
+            set
+            {
+                _childItems = value;
+                OnPropertyChanged(nameof(ChildItems));
+            }
+        }
 
         private bool _isSelected;
         public bool IsSelected
