@@ -25,6 +25,8 @@ namespace DungeonMapper2.Models
 
         public int? FolderId { get; set; }
 
+        public override SegoeIcon Icon => SegoeIcon.Document;
+
         public Map()
         {
             TileSize = 25;

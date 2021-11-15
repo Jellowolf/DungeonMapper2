@@ -16,5 +16,7 @@ namespace DungeonMapper2.Models
         bool IsExpanded { get; set; }
 
         bool EditModeEnabled { get; set; }
+
+        SegoeIcon Icon { get; }
     }
 }

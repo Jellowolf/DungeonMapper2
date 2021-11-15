@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace DungeonMapper2.Models
 {
-    public class BasePathItem : IPathItem
+    public abstract class BasePathItem : IPathItem
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -50,6 +50,9 @@ namespace DungeonMapper2.Models
             {
                 _isExpanded = value;
                 OnPropertyChanged(nameof(IsExpanded));
+
+                // Also update the icon since IsExpanded is used with it (I wonder if there's a better way to do this)
+                OnPropertyChanged(nameof(Icon));
             }
         }
 
@@ -63,6 +66,8 @@ namespace DungeonMapper2.Models
                 OnPropertyChanged(nameof(EditModeEnabled));
             }
         }
+
+        public abstract SegoeIcon Icon { get; }
 
         protected void OnPropertyChanged(string propertyName)
         {

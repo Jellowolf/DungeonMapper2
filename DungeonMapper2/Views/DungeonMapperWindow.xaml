@@ -18,10 +18,31 @@
     <Window.Resources>
         <utilities:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <utilities:BooleanToVisibilityConverter Reverse="True" x:Key="InverseBooleanToVisibilityConverter"/>
+        <utilities:EnumDescriptionConverter x:Key="EnumDescriptionConverter"/>
+
+        <Style x:Key="PathItemStyle" TargetType="TreeViewItem">
+            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
+            <Setter Property="IsExpanded" Value="{Binding Path=IsExpanded, Mode=TwoWay}"/>
+        </Style>
+        <Style x:Key="SegoeIcon" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
+        </Style>
+        <Style x:Key="MainToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource SegoeIcon}">
+            <Setter Property="FontSize" Value="16"/>
+        </Style>
+        <Style x:Key="TreeToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource SegoeIcon}">
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style x:Key="ContextMenuIcon" TargetType="TextBlock" BasedOn="{StaticResource SegoeIcon}">
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        
         <HierarchicalDataTemplate x:Key="PathItemTemplate" ItemsSource="{Binding ChildItems}">
-            <StackPanel>
-                <TextBlock Text="{Binding Path=Name}" Visibility="{Binding EditModeEnabled, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="3,0,3,0"/>
-                <TextBox x:Name="mapNameTextBox" Text="{Binding Path=Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Icon, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=SegoeIcon}" VerticalAlignment="Center"/>
+                <TextBlock Text="{Binding Name}" Visibility="{Binding EditModeEnabled, Converter={StaticResource InverseBooleanToVisibilityConverter}}" Margin="3,0,3,0"/>
+                <TextBox x:Name="mapNameTextBox" Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
                          Visibility="{Binding EditModeEnabled, Converter={StaticResource BooleanToVisibilityConverter}}" Padding="1,0,1,0">
                     <i:Interaction.Triggers>
                         <i:DataTrigger Binding="{Binding ElementName=mapNameTextBox, Path=Visibility}" Comparison="Equal" Value="Visible">
@@ -40,23 +61,6 @@
                 </TextBox>
             </StackPanel>
         </HierarchicalDataTemplate>
-        <Style x:Key="PathItemStyle" TargetType="TreeViewItem">
-            <Setter Property="IsSelected" Value="{Binding Path=IsSelected, Mode=TwoWay}"/>
-            <Setter Property="IsExpanded" Value="{Binding Path=IsExpanded, Mode=TwoWay}"/>
-        </Style>
-        <Style x:Key="ToolBarIcon" TargetType="TextBlock">
-            <Setter Property="FontFamily" Value="Segoe MDL2 Assets"/>
-        </Style>
-        <Style x:Key="MainToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
-            <Setter Property="FontSize" Value="16"/>
-        </Style>
-        <Style x:Key="TreeToolBarIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
-            <Setter Property="FontSize" Value="12"/>
-        </Style>
-        <Style x:Key="ContextMenuIcon" TargetType="TextBlock" BasedOn="{StaticResource ToolBarIcon}">
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Center"/>
-        </Style>
     </Window.Resources>
     <Grid x:Name="mainGrid">
         <Grid.RowDefinitions>
@@ -73,13 +77,13 @@
         <ToolBarTray Grid.Row="0" Grid.ColumnSpan="3" IsLocked="True" Background="DarkGray">
             <ToolBar Background="DarkGray" Loaded="SetToolBarTemplateBackground">
                 <Button Command="{Binding SaveCurrentMapCommand}">
-                    <TextBlock Text="&#xE74E;" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
+                    <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Save}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
                 <Button Command="{Binding ClearCurrentMapCommand}">
-                    <TextBlock Text="&#xE75C;" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
+                    <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.EraseTool}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
                 <Button Command="{Binding DeleteCurrentMapCommand}">
-                    <TextBlock Text="&#xE74D;" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
+                    <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Delete}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
             </ToolBar>
         </ToolBarTray>
@@ -94,10 +98,10 @@
                 <ToolBar Background="DarkGray" Loaded="SetToolBarTemplateBackground">
                     <!-- The functionality here still needs work-->
                     <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}">
-                        <TextBlock Text="&#xE710;" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
+                        <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Add}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
                     <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}">
-                        <TextBlock Text="&#xE8F4;" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
+                        <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.TreeFolderFolder}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
                 </ToolBar>
             </ToolBarTray>
@@ -107,27 +111,27 @@
                     <ContextMenu>
                         <MenuItem Header="Add" IsEnabled="{Binding AddEnabled}">
                             <MenuItem.Icon>
-                                <TextBlock Text="&#xE710;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Add}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
                             </MenuItem.Icon>
                             <MenuItem Header="Folder" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}">
                                 <MenuItem.Icon>
-                                    <TextBlock Text="&#xE8F4;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                    <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.TreeFolderFolder}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                             <MenuItem Header="Map" Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}">
                                 <MenuItem.Icon>
-                                    <TextBlock Text="&#xE710;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                    <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Add}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
                                 </MenuItem.Icon>
                             </MenuItem>
                         </MenuItem>
                         <MenuItem Header="Rename" Command="{Binding StartRenamePathItemCommand}">
                             <MenuItem.Icon>
-                                <TextBlock Text="&#xE8AC;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Rename}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
                             </MenuItem.Icon>
                         </MenuItem>
                         <MenuItem Header="Delete" Command="{Binding DeletePathItemCommand}">
                             <MenuItem.Icon>
-                                <TextBlock Text="&#xE74D;" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
+                                <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Delete}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=ContextMenuIcon}"/>
                             </MenuItem.Icon>
                         </MenuItem>
                     </ContextMenu>
