@@ -101,7 +101,7 @@
                         <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Add}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
                     <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}">
-                        <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.TreeFolderFolder}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
+                        <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.NewFolder}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
                 </ToolBar>
             </ToolBarTray>

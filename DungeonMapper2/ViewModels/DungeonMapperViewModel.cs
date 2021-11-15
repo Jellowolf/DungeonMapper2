@@ -95,13 +95,13 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand HandleWidowClosingCommand => _handleWidowClosingCommand ??= new RelayCommand(o => HandleWindowClosing(), o => true);
 
-        public RelayCommand StartAddPathItemCommand => _startAddPathItemCommand ??= new RelayCommand(itemType => StartAddPathItem((PathItemType)itemType), o => true);
+        public RelayCommand StartAddPathItemCommand => _startAddPathItemCommand ??= new RelayCommand(itemType => StartAddPathItem((PathItemType)itemType), o => AddEnabled);
 
-        public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => _isrightClickPathItem);
+        public RelayCommand StartRenamePathItemCommand => _startRenamePathItemCommand ??= new RelayCommand(o => StartRenamePathItem(), o => _selectedTreeItem != null);
 
         public RelayCommand CompleteEditPathItemCommand => _completeEditPathItemCommand ??= new RelayCommand(o => CompleteEditPathItem(), editEnabled => (bool)editEnabled);
 
-        public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => _isrightClickPathItem);
+        public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => _selectedTreeItem != null);
 
         #endregion
 
@@ -203,7 +203,7 @@ namespace DungeonMapper2.ViewModels
         private void HandleTreeSelectionChanged(RoutedPropertyChangedEventArgs<object> e)
         {
             _selectedTreeItem = e.NewValue as IPathItem;
-            if (!(e.NewValue is Map))
+            if (AddEnabled = e.NewValue is not Map)
                 return;
             if (e.NewValue != null && e.NewValue != e.OldValue)
                 ChangeMaps((Map)e.NewValue);
@@ -222,20 +222,25 @@ namespace DungeonMapper2.ViewModels
 
         private void HandleTreeLeftMouseDown(MouseButtonEventArgs e)
         {
+            var selectedPathItem = (((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.DataContext as IPathItem;
+            if (selectedPathItem == null && _selectedTreeItem != null)
+                _selectedTreeItem.IsSelected = false;
             _dragPositionStart = e.GetPosition(null);
         }
 
         private void HandleTreeRightMouseDown(MouseButtonEventArgs e)
         {
             var selectedPathItem = (((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.DataContext as IPathItem;
-            if (_isrightClickPathItem = selectedPathItem != null)
+            if (selectedPathItem == null && _selectedTreeItem != null)
+                _selectedTreeItem.IsSelected = false;
+            if (selectedPathItem != null)
                 selectedPathItem.IsSelected = true;
             AddEnabled = selectedPathItem is not Map;
         }
 
         private void HandleTreeMouseMove(MouseEventArgs e)
         {
-            if (e.LeftButton == MouseButtonState.Pressed)
+            if (e.LeftButton == MouseButtonState.Pressed && _selectedTreeItem != null)
             {
                 var currentPosition = e.GetPosition(null);
                 var positionDifference = _dragPositionStart - currentPosition;
@@ -372,20 +377,24 @@ namespace DungeonMapper2.ViewModels
             IPathItem newItem = null;
 
             if (type == PathItemType.Folder)
-                newItem = new Folder { Parent = _isrightClickPathItem ? (Folder)_selectedTreeItem : null };
+                newItem = new Folder { Parent = _selectedTreeItem as Folder };
             else if (type == PathItemType.Map)
             {
-                newItem = new Map { FolderId = _isrightClickPathItem ? _selectedTreeItem.Id : null };
+                newItem = new Map { FolderId = (_selectedTreeItem as Folder)?.Id };
                 ((Map)newItem).Initialize();
             }
 
             newItem.IsSelected = newItem.EditModeEnabled = true;
 
-            if (_isrightClickPathItem)
+            if (_selectedTreeItem != null)
             {
                 _selectedTreeItem.ChildItems ??= new ObservableCollection<IPathItem>();
                 _selectedTreeItem.ChildItems.Add(newItem);
-                _selectedTreeItem.IsExpanded = true;
+
+                // Setting IsExpanded on _selectedTreeItem doesn't always work, there might be a binding or reference issue I'm missing on that
+                var treeDataSelectedItem = FindPathItemParent(newItem);
+                if (treeDataSelectedItem != null)
+                    treeDataSelectedItem.IsExpanded = true;
             }
             else
             {
