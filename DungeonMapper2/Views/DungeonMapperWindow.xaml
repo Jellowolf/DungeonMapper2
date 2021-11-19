@@ -14,6 +14,9 @@
         <i:EventTrigger EventName="Closing">
             <i:InvokeCommandAction Command="{Binding HandleWidowClosingCommand}"/>
         </i:EventTrigger>
+        <i:EventTrigger EventName="KeyDown">
+            <i:InvokeCommandAction Command="{Binding WindowKeyDownCommand}" PassEventArgsToCommand="True"/>
+        </i:EventTrigger>
     </i:Interaction.Triggers>
     <Window.Resources>
         <utilities:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -66,6 +69,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
             <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -74,33 +78,39 @@
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <ToolBarTray Grid.Row="0" Grid.ColumnSpan="3" IsLocked="True" Background="DarkGray">
+        <Menu Grid.Row="0" Grid.ColumnSpan="3">
+            <MenuItem Header="_File">
+                <MenuItem Header="_Exit" Command="{Binding CloseWindowCommand}"/>
+            </MenuItem>
+            <MenuItem Header="_Tools">
+                <MenuItem Header="_Settings..." Command="{Binding OpenSettingsCommand}"/>
+            </MenuItem>
+        </Menu>
+
+        <ToolBarTray Grid.Row="1" Grid.ColumnSpan="3" IsLocked="True" Background="DarkGray">
             <ToolBar Background="DarkGray" Loaded="SetToolBarTemplateBackground">
-                <Button Command="{Binding SaveCurrentMapCommand}">
+                <Button Command="{Binding SaveCurrentMapCommand}" Focusable="False">
                     <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Save}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
-                <Button Command="{Binding ClearCurrentMapCommand}">
+                <Button Command="{Binding ClearCurrentMapCommand}" Focusable="False">
                     <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.EraseTool}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
-                <Button Command="{Binding DeleteCurrentMapCommand}">
+                <Button Command="{Binding DeleteCurrentMapCommand}" Focusable="False">
                     <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Delete}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=MainToolBarIcon}"/>
                 </Button>
             </ToolBar>
         </ToolBarTray>
 
-        <TextBlock Grid.Row="1" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Width="Auto" Height="Auto" Text="{Binding CurrentMap.Name}" FontSize="20"/>
-        
-        <!-- just cramming the auto-save here for the moment-->
-        <CheckBox Grid.Row="1" Grid.ColumnSpan="3" x:Name="autoSavecheckBox" Content="auto-save" HorizontalAlignment="Left" Margin="273,10,0,0" VerticalAlignment="Top" IsChecked="{Binding AutoSaveEnabled}"/>
+        <TextBlock Grid.Row="2" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" Width="Auto" Height="Auto" Text="{Binding CurrentMap.Name}" FontSize="20" Margin="0,0,0,5"/>
 
-        <DockPanel Grid.Column="1" Grid.Row="2">
+        <DockPanel Grid.Column="1" Grid.Row="3">
             <ToolBarTray DockPanel.Dock="Top" IsLocked="True" Background="DarkGray">
                 <ToolBar Background="DarkGray" Loaded="SetToolBarTemplateBackground">
                     <!-- The functionality here still needs work-->
-                    <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}">
+                    <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Map}" Focusable="False">
                         <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.Add}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
-                    <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}">
+                    <Button Command="{Binding StartAddPathItemCommand}" CommandParameter="{x:Static models:PathItemType.Folder}" Focusable="False">
                         <TextBlock Text="{Binding Source={x:Static models:SegoeIcon.NewFolder}, Converter={StaticResource EnumDescriptionConverter}}" Style="{StaticResource ResourceKey=TreeToolBarIcon}"/>
                     </Button>
                 </ToolBar>
@@ -156,11 +166,11 @@
             </TreeView>
         </DockPanel>
 
-        <Border Grid.Row="2" Grid.Column="2" Height="30" Width="10" CornerRadius="0,8,8,0" BorderThickness="1" BorderBrush="DimGray" Background="DimGray"
+        <Border Grid.Row="3" Grid.Column="2" Height="30" Width="10" CornerRadius="0,8,8,0" BorderThickness="1" BorderBrush="DimGray" Background="DimGray"
                 HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,5,0,0" Panel.ZIndex="1" MouseUp="Border_MouseUp"/>
-        <GridSplitter x:Name="gridSplitter" Grid.Row="2" Grid.Column="1" Width="5" Height="auto" Focusable="False"/>
+        <GridSplitter x:Name="gridSplitter" Grid.Row="3" Grid.Column="1" Width="5" Height="auto" Focusable="False"/>
 
-        <DockPanel Grid.Row="2" Grid.Column="2">
+        <DockPanel Grid.Row="3" Grid.Column="2">
             <ScrollViewer DockPanel.Dock="Bottom" x:Name="scrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" 
                           Background="Black" FocusManager.FocusedElement="{Binding ElementName=canvas}">
                 <Canvas x:Name="canvas" ScrollViewer.CanContentScroll="True" Margin="50" Focusable="True">

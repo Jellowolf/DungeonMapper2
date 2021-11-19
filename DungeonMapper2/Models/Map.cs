@@ -127,6 +127,11 @@ namespace DungeonMapper2.Models
                 MapData[_position.x][_position.y] = new Tile(true);
         }
 
+        public void MarkTransport()
+        {
+            MapData[_position.x][_position.y].Transport = !MapData[_position.x][_position.y].Transport.HasValue ? TransportType.Unknown : null;
+        }
+
         private void SetHalls(Movement movement)
         {
             // set current tile walls
@@ -203,13 +208,13 @@ namespace DungeonMapper2.Models
 
                     // draw walls
                     if (tile.Walls.HasFlag(Wall.Up))
-                        drawingContext.DrawRectangle(Brushes.Gray, null, new Rect(left, top, TileSize, _wallWidth));
+                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top, TileSize, _wallWidth));
                     if (tile.Walls.HasFlag(Wall.Down))
-                        drawingContext.DrawRectangle(Brushes.Gray, null, new Rect(left, top + TileSize - _wallWidth, TileSize, _wallWidth));
+                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top + TileSize - _wallWidth, TileSize, _wallWidth));
                     if (tile.Walls.HasFlag(Wall.Left))
-                        drawingContext.DrawRectangle(Brushes.Gray, null, new Rect(left, top, _wallWidth, TileSize));
+                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top, _wallWidth, TileSize));
                     if (tile.Walls.HasFlag(Wall.Right))
-                        drawingContext.DrawRectangle(Brushes.Gray, null, new Rect(left + TileSize - _wallWidth, top, _wallWidth, TileSize));
+                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left + TileSize - _wallWidth, top, _wallWidth, TileSize));
 
                     // draw doors
                     if (tile.Doors.HasFlag(Wall.Up))
@@ -220,6 +225,20 @@ namespace DungeonMapper2.Models
                         drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left, top, _doorWidth, TileSize));
                     if (tile.Doors.HasFlag(Wall.Right))
                         drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left + TileSize - _doorWidth, top, _doorWidth, TileSize));
+
+                    // draw transport if available
+                    if (tile.Transport != null)
+                    {
+                        var halfTileSize = (double)TileSize / 2;
+                        var quarterTileSize = (double)TileSize / 4;
+
+                        if (tile.Transport == TransportType.Unknown)
+                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
+                        else if (tile.Transport == TransportType.Pit)
+                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
+                        else if (tile.Transport == TransportType.Portal)
+                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
+                    }
                 }
             }
 

@@ -2,6 +2,7 @@
 {
     public enum Setting
     {
-        CurrentMapId = 0
+        CurrentMapId = 0,
+        AutoSaveEnabled = 1
     }
 }

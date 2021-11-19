@@ -11,7 +11,7 @@ namespace DungeonMapper2.DataAccess
         {
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
-            var sql = $"INSERT INTO Tile (MapId, Traveled, Walls, Door) VALUES ({mapId}, {tile.Traveled}, {tile.Walls}, {tile.Doors})";
+            var sql = $"INSERT INTO Tile (MapId, Traveled, Walls, Door) VALUES ({mapId}, {tile.Traveled}, {tile.Walls}, {tile.Doors}, {tile.Transport})";
             var command = new SqliteCommand(sql, database);
             command.ExecuteNonQuery();
         }
@@ -21,11 +21,11 @@ namespace DungeonMapper2.DataAccess
             var tileinput = new List<string>();
             for (int x = 0; x < tiles.Length; x++)
                 for (int y = 0; y < tiles[x].Length; y++)
-                    if (tiles[x][y] != null && (tiles[x][y].Traveled || tiles[x][y].Id.HasValue)) tileinput.Add($"({(tiles[x][y].Id.HasValue ? tiles[x][y].Id.ToString() : "NULL")}, {mapId}, {x}, {y}, {(tiles[x][y].Traveled ? 1 : 0)}, {(int)tiles[x][y].Walls}, {(int)tiles[x][y].Doors})");
+                    if (tiles[x][y] != null && (tiles[x][y].Traveled || tiles[x][y].Id.HasValue)) tileinput.Add($"({(tiles[x][y].Id.HasValue ? tiles[x][y].Id.ToString() : "NULL")}, {mapId}, {x}, {y}, {(tiles[x][y].Traveled ? 1 : 0)}, {(int)tiles[x][y].Walls}, {(int)tiles[x][y].Doors}, {(tiles[x][y].Transport.HasValue ? (int)tiles[x][y].Transport : "NULL")})");
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
-            var sql = @$"INSERT INTO Tile (Id, MapId, PositionX, PositionY, Traveled, Walls, Doors) VALUES {string.Join(",", tileinput)} 
-                ON CONFLICT(Id) DO UPDATE SET MapId = excluded.MapId, PositionX = excluded.PositionX, PositionY = excluded.PositionY, Traveled = excluded.Traveled, Walls = excluded.Walls, Doors = excluded.Doors";
+            var sql = @$"INSERT INTO Tile (Id, MapId, PositionX, PositionY, Traveled, Walls, Doors, Transport) VALUES {string.Join(",", tileinput)} 
+                ON CONFLICT(Id) DO UPDATE SET MapId = excluded.MapId, PositionX = excluded.PositionX, PositionY = excluded.PositionY, Traveled = excluded.Traveled, Walls = excluded.Walls, Doors = excluded.Doors, Transport = excluded.Transport";
             var command = new SqliteCommand(sql, database);
             command.ExecuteNonQuery();
         }
@@ -34,7 +34,7 @@ namespace DungeonMapper2.DataAccess
         {
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
-            var sql = $"SELECT Id, PositionX, PositionY, Traveled, Walls, Doors FROM Tile WHERE MapId = {mapId}";
+            var sql = $"SELECT Id, PositionX, PositionY, Traveled, Walls, Doors, Transport FROM Tile WHERE MapId = {mapId}";
             var command = new SqliteCommand(sql, database);
             using var reader = command.ExecuteReader();
             var tileDictionary = new Dictionary<(int x, int y), Tile>();
@@ -47,6 +47,7 @@ namespace DungeonMapper2.DataAccess
                         Traveled = reader.GetBoolean(reader.GetOrdinal("Traveled")),
                         Walls = (Wall)reader.GetInt32(reader.GetOrdinal("Walls")),
                         Doors = (Wall)reader.GetInt32(reader.GetOrdinal("Doors")),
+                        Transport = !reader.IsDBNull(reader.GetOrdinal("Transport")) ? (TransportType)reader.GetInt32(reader.GetOrdinal("Transport")) : null
                     });
             }
             var maxX = tileDictionary.Select(tile => tile.Key.x).Max();

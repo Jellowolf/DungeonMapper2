@@ -53,7 +53,8 @@ namespace DungeonMapper2.DataAccess
                         PositionY INTEGER NOT NULL,
                         Traveled INTEGER NOT NULL,
                         Walls INTEGER NOT NULL,
-                        Doors INTEGER NOT NULL
+                        Doors INTEGER NOT NULL,
+                        Transport INTEGER NULL
                 )";
 
             command = new SqliteCommand(sql, database);

@@ -1,6 +1,7 @@
 ﻿using DungeonMapper2.DataAccess;
 using DungeonMapper2.Models;
 using DungeonMapper2.Utilities;
+using DungeonMapper2.Views;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -14,9 +15,11 @@ namespace DungeonMapper2.ViewModels
     public class DungeonMapperViewModel : DependencyObject
     {
         private readonly Action<Map> _printMap;
+        private readonly Action<Map> _updateMapOffsets;
+        private readonly Action _closeWindow;
         private IPathItem _selectedTreeItem;
         private Point _dragPositionStart;
-        private bool _isrightClickPathItem;
+        private Window _settingsWindow;
 
         #region Dependency Properties
 
@@ -61,6 +64,7 @@ namespace DungeonMapper2.ViewModels
         #region Commands
 
         private RelayCommand _mapKeyDownCommand;
+        private RelayCommand _windowKeyDownCommand;
         private RelayCommand _saveCurrentMapCommand;
         private RelayCommand _deleteCurrentMapCommand;
         private RelayCommand _clearCurrentMapCommand;
@@ -74,8 +78,12 @@ namespace DungeonMapper2.ViewModels
         private RelayCommand _startRenamePathItemCommand;
         private RelayCommand _completeEditPathItemCommand;
         private RelayCommand _deletePathItemCommand;
+        private RelayCommand _openSettingsCommand;
+        private RelayCommand _closeWindowCommand;
 
         public RelayCommand MapKeyDownCommand => _mapKeyDownCommand ??= new RelayCommand(eventArgs => HandleMapKeyDown((KeyEventArgs)eventArgs), o => true);
+
+        public RelayCommand WindowKeyDownCommand => _windowKeyDownCommand ??= new RelayCommand(eventArgs => HandleWindowKeyDown((KeyEventArgs)eventArgs), o => true);
 
         public RelayCommand SaveCurrentMapCommand => _saveCurrentMapCommand ??= new RelayCommand(o => SaveCurrentMap(), o => CurrentMap != null);
 
@@ -103,17 +111,24 @@ namespace DungeonMapper2.ViewModels
 
         public RelayCommand DeletePathItemCommand => _deletePathItemCommand ??= new RelayCommand(o => DeletePathItem(), o => _selectedTreeItem != null);
 
+        public RelayCommand OpenSettingsCommand => _openSettingsCommand ??= new RelayCommand(o => OpenSettings(), o => true);
+
+        public RelayCommand CloseWindowCommand => _closeWindowCommand ??= new RelayCommand(o => _closeWindow(), o => true);
+
         #endregion
 
-        public DungeonMapperViewModel(Action<Map> printAction)
+        public DungeonMapperViewModel(Action<Map> printAction, Action<Map> updateMapOffsets, Action closeWindow)
         {
             _printMap = printAction;
+            _updateMapOffsets = updateMapOffsets;
+            _closeWindow = closeWindow;
             DatabaseManager.InitializeDatabase();
             TreeData = new ObservableCollection<IPathItem>(BuildTreeData());
 
             // I might just want to save the IsExpanded and IsSelected states in general, but for now flipping back to the user's last map seems reasonable
             var currentMapId = SettingDataAccess.GetSetting<int?>(Setting.CurrentMapId);
             SetPathItemInTreeData<Map>(currentMapId, true);
+            LoadSettings();
         }
 
         private List<IPathItem> BuildTreeData()
@@ -143,9 +158,16 @@ namespace DungeonMapper2.ViewModels
                 return;
             }
 
-            if (args.Key == Key.T)
+            if (args.Key == Key.M)
             {
                 CurrentMap.MarkTravel();
+                _printMap(CurrentMap);
+                return;
+            }
+
+            if (args.Key == Key.T)
+            {
+                CurrentMap.MarkTransport();
                 _printMap(CurrentMap);
                 return;
             }
@@ -178,6 +200,15 @@ namespace DungeonMapper2.ViewModels
                 CurrentMap.SetTileDoor(Wall.Right);
 
             _printMap(CurrentMap);
+            _updateMapOffsets(CurrentMap);
+        }
+
+        private void HandleWindowKeyDown(KeyEventArgs args)
+        {
+            var ctrlDown = args.KeyboardDevice.Modifiers.HasFlag(ModifierKeys.Control);
+
+            if (args.Key == Key.S && ctrlDown && CurrentMap != null)
+                SaveCurrentMap();
         }
 
         private void SaveCurrentMap()
@@ -262,7 +293,7 @@ namespace DungeonMapper2.ViewModels
             if (sourceItem == null)
                 return;
 
-            // IThis is to filter out Maps but to consider everything that's not otherwise a folder to be the base path of the tree
+            // This is to filter out Maps and considers everything that's not a folder to be the base path of the tree
             var destinationItem = (((e.OriginalSource as TextBlock)?.TemplatedParent as ContentPresenter)?.TemplatedParent as TreeViewItem)?.DataContext as IPathItem;
             if (sourceItem == destinationItem || destinationItem?.GetType() == typeof(Map))
                 return;
@@ -436,6 +467,18 @@ namespace DungeonMapper2.ViewModels
                 TreeData.Remove(item);
             else
                 ((item as Folder)?.Parent ?? FindPathItemParent(item)).ChildItems.Remove(item);
+        }
+
+        private void OpenSettings()
+        {
+            _settingsWindow = new SettingsWindow();
+            _settingsWindow.ShowDialog();
+            LoadSettings();
+        }
+
+        private void LoadSettings()
+        {
+            AutoSaveEnabled = SettingDataAccess.GetSetting<bool?>(Setting.AutoSaveEnabled) ?? false;
         }
     }
 }

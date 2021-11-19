@@ -10,6 +10,8 @@
 
         public Wall Doors { get; set; }
 
+        public TransportType? Transport { get; set; }
+
         public Tile()
         {
             Traveled = false;
