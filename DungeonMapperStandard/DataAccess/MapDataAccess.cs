@@ -1,13 +1,13 @@
-﻿using DungeonMapper2.Models;
+﻿using DungeonMapperStandard.Models;
 using Microsoft.Data.Sqlite;
 using System;
 using System.Collections.Generic;
 
-namespace DungeonMapper2.DataAccess
+namespace DungeonMapperStandard.DataAccess
 {
     public class MapDataAccess
     {
-        public static int SaveMap(Map map)
+        public static int SaveMap(IMap map)
         {
             int? mapId = map.Id;
             using var database = DatabaseManager.GetDatabaseConnection();
@@ -26,14 +26,14 @@ namespace DungeonMapper2.DataAccess
             return mapId.Value;
         }
 
-        public static List<Map> GetMaps()
+        public static List<IMap> GetMaps()
         {
             using var database = DatabaseManager.GetDatabaseConnection();
             database.Open();
             var sql = $"SELECT Id, Name, PositionX, PositionY, FolderId FROM Map";
             var command = new SqliteCommand(sql, database);
             using var reader = command.ExecuteReader();
-            var maps = new List<Map>();
+            var maps = new List<IMap>();
             while (reader.Read())
             {
                 maps.Add(new Map

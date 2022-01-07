@@ -1,7 +1,7 @@
-﻿using DungeonMapper2.DataAccess;
-using DungeonMapper2.Models;
-using DungeonMapper2.Utilities;
+﻿using DungeonMapper2.Utilities;
 using DungeonMapper2.Views;
+using DungeonMapperStandard.DataAccess;
+using DungeonMapperStandard.Models;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

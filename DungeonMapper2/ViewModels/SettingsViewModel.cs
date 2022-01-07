@@ -1,6 +1,6 @@
 ﻿using DungeonMapper2.DataAccess;
-using DungeonMapper2.Models;
 using DungeonMapper2.Utilities;
+using DungeonMapperStandard.Models;
 using System;
 using System.Windows;
 

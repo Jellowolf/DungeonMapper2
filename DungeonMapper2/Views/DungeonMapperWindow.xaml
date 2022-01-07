@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:DungeonMapper2"
         xmlns:utilities="clr-namespace:DungeonMapper2.Utilities"
-        xmlns:models="clr-namespace:DungeonMapper2.Models"
+        xmlns:models="clr-namespace:DungeonMapperStandard.Models;assembly=DungeonMapperStandard"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         mc:Ignorable="d"
         Title="Dungeon Mapper 2" Height="750" Width="1000"

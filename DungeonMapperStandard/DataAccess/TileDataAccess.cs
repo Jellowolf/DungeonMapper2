@@ -1,9 +1,9 @@
-﻿using DungeonMapper2.Models;
+﻿using DungeonMapperStandard.Models;
 using Microsoft.Data.Sqlite;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace DungeonMapper2.DataAccess
+namespace DungeonMapperStandard.DataAccess
 {
     public class TileDataAccess
     {

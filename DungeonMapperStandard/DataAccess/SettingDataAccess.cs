@@ -1,8 +1,8 @@
-﻿using DungeonMapper2.Models;
+﻿using DungeonMapperStandard.Models;
 using Microsoft.Data.Sqlite;
 using System;
 
-namespace DungeonMapper2.DataAccess
+namespace DungeonMapperStandard.DataAccess
 {
     public class SettingDataAccess
     {

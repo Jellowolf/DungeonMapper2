@@ -1,4 +1,4 @@
-﻿namespace DungeonMapper2.Models
+﻿namespace DungeonMapperStandard.Models
 {
     public enum Setting
     {
