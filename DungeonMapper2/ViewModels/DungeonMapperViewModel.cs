@@ -122,7 +122,6 @@ namespace DungeonMapper2.ViewModels
             _printMap = printAction;
             _updateMapOffsets = updateMapOffsets;
             _closeWindow = closeWindow;
-            DatabaseManager.InitializeDatabase();
             TreeData = new ObservableCollection<IPathItem>(BuildTreeData());
 
             // I might just want to save the IsExpanded and IsSelected states in general, but for now flipping back to the user's last map seems reasonable

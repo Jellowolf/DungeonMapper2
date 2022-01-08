@@ -1,4 +1,5 @@
-﻿using DungeonMapper2.DataAccess;
+﻿using DungeonMapper2.Utilities;
+using DungeonMapperStandard.DataAccess;
 using System;
 using System.IO;
 using System.Windows;
@@ -10,9 +11,12 @@ namespace DungeonMapper2
     /// </summary>
     public partial class App : Application
     {
-        public static void OnStartup()
+        public App() => Start();
+
+        public static void Start()
         {
-            DatabaseManager.AppDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DungeonMapper2");
+            var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "DungeonMapper2");
+            DatabaseManager.Initialize(appDataPath, new DatabaseConnectionHandler());
         }
     }
 }

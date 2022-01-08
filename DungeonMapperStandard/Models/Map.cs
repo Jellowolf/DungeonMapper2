@@ -1,21 +1,21 @@
-﻿using DungeonMapper2.DataAccess;
-using DungeonMapper2.Utilities;
+﻿using DungeonMapperStandard.DataAccess;
 using System;
-using System.Windows;
-using System.Windows.Media;
 
-namespace DungeonMapper2.Models
+namespace DungeonMapperStandard.Models
 {
     public class Map : BasePathItem
     {
-        public bool HallMode;
-        public Tile[][] MapData;
+        private Tile[][] _mapData;
+        public Tile[][] MapData { get => _mapData; set => _mapData = value; }
 
         private (int x, int y) _position;
-        private readonly int _wallWidth;
-        private readonly int _doorWidth;
-
         public (int x, int y) Position { get => _position; set => _position = value; }
+
+        public bool HallMode { get; set; }
+
+        public int WallWidth { get; set; }
+
+        public int DoorWidth { get; set; }
 
         public int TileSize { get; set; }
 
@@ -30,14 +30,14 @@ namespace DungeonMapper2.Models
         public Map()
         {
             TileSize = 25;
-            _wallWidth = 6;
-            _doorWidth = 6;
+            WallWidth = 6;
+            DoorWidth = 6;
         }
 
         public void Initialize()
         {
             _position = (0, 0);
-            MapData = new Tile[][] { new Tile[] { new Tile(true) } };
+            _mapData = new Tile[][] { new Tile[] { new Tile(true) } };
             MaxIndexX = 0;
             MaxIndexY = 0;
             HallMode = false;
@@ -48,9 +48,9 @@ namespace DungeonMapper2.Models
             _position.y += 1;
             if (MaxIndexY < _position.y)
             {
-                for (var index = 0; index < MapData.Length; index++)
+                for (var index = 0; index < _mapData.Length; index++)
                 {
-                    Array.Resize(ref MapData[index], MapData[index].Length + 1);
+                    Array.Resize(ref _mapData[index], _mapData[index].Length + 1);
                 }
                 MaxIndexY++;
             }
@@ -63,11 +63,11 @@ namespace DungeonMapper2.Models
             _position.y -= 1;
             if (_position.y < 0)
             {
-                for (var index = 0; index < MapData.Length; index++)
+                for (var index = 0; index < _mapData.Length; index++)
                 {
-                    Array.Resize(ref MapData[index], MapData[index].Length + 1);
-                    Array.Copy(MapData[index], 0, MapData[index], 1, MapData[index].Length - 1);
-                    MapData[index][0] = new Tile(false);
+                    Array.Resize(ref _mapData[index], _mapData[index].Length + 1);
+                    Array.Copy(_mapData[index], 0, _mapData[index], 1, _mapData[index].Length - 1);
+                    _mapData[index][0] = new Tile(false);
                 }
                 MaxIndexY++;
                 _position.y = 0;
@@ -81,9 +81,9 @@ namespace DungeonMapper2.Models
             _position.x -= 1;
             if (_position.x < 0)
             {
-                Array.Resize(ref MapData, MapData.Length + 1);
-                Array.Copy(MapData, 0, MapData, 1, MapData.Length - 1);
-                MapData[0] = new Tile[MaxIndexY + 1];
+                Array.Resize(ref _mapData, _mapData.Length + 1);
+                Array.Copy(_mapData, 0, _mapData, 1, _mapData.Length - 1);
+                _mapData[0] = new Tile[MaxIndexY + 1];
                 MaxIndexX++;
                 _position.x = 0;
             }
@@ -96,8 +96,8 @@ namespace DungeonMapper2.Models
             _position.x += 1;
             if (MaxIndexX < _position.x)
             {
-                Array.Resize(ref MapData, MapData.Length + 1);
-                MapData[MapData.Length - 1] = new Tile[MaxIndexY + 1];
+                Array.Resize(ref _mapData, _mapData.Length + 1);
+                _mapData[_mapData.Length - 1] = new Tile[MaxIndexY + 1];
                 MaxIndexX++;
             }
             UpdateTile(Movement.Right);
@@ -106,12 +106,12 @@ namespace DungeonMapper2.Models
 
         public void ClearCurrentTile()
         {
-            MapData[_position.x][_position.y].Clear();
+            _mapData[_position.x][_position.y].Clear();
         }
 
         private void UpdateTile(Movement movement)
         {
-            var tileTraveled = MapData[_position.x][_position.y] != null && MapData[_position.x][_position.y].Traveled;
+            var tileTraveled = _mapData[_position.x][_position.y] != null && _mapData[_position.x][_position.y].Traveled;
             if (!tileTraveled)
             {
                 MarkTravel();
@@ -121,50 +121,50 @@ namespace DungeonMapper2.Models
 
         public void MarkTravel()
         {
-            if (MapData[_position.x][_position.y] != null)
-                MapData[_position.x][_position.y].Traveled = true;
+            if (_mapData[_position.x][_position.y] != null)
+                _mapData[_position.x][_position.y].Traveled = true;
             else
-                MapData[_position.x][_position.y] = new Tile(true);
+                _mapData[_position.x][_position.y] = new Tile(true);
         }
 
         public void MarkTransport()
         {
-            MapData[_position.x][_position.y].Transport = !MapData[_position.x][_position.y].Transport.HasValue ? TransportType.Unknown : null;
+            _mapData[_position.x][_position.y].Transport = !_mapData[_position.x][_position.y].Transport.HasValue ? TransportType.Unknown : (TransportType?)null;
         }
 
         private void SetHalls(Movement movement)
         {
             // set current tile walls
             if (movement == Movement.Up || movement == Movement.Down)
-                MapData[_position.x][_position.y].Walls |= Wall.Left | Wall.Right;
+                _mapData[_position.x][_position.y].Walls |= Wall.Left | Wall.Right;
             if (movement == Movement.Left || movement == Movement.Right)
-                MapData[_position.x][_position.y].Walls |= Wall.Up | Wall.Down;
+                _mapData[_position.x][_position.y].Walls |= Wall.Up | Wall.Down;
 
             // set previous tile walls
             if (movement == Movement.Up)
-                MapData[_position.x][_position.y - 1].Walls &= ~Wall.Up;
+                _mapData[_position.x][_position.y - 1].Walls &= ~Wall.Up;
             if (movement == Movement.Down)
-                MapData[_position.x][_position.y + 1].Walls &= ~Wall.Down;
+                _mapData[_position.x][_position.y + 1].Walls &= ~Wall.Down;
             if (movement == Movement.Left)
-                MapData[_position.x + 1][_position.y].Walls &= ~Wall.Left;
+                _mapData[_position.x + 1][_position.y].Walls &= ~Wall.Left;
             if (movement == Movement.Right)
-                MapData[_position.x - 1][_position.y].Walls &= ~Wall.Right;
+                _mapData[_position.x - 1][_position.y].Walls &= ~Wall.Right;
         }
 
         public void SetTileWall(Wall wall)
         {
-            if (MapData[_position.x][_position.y].Walls.HasFlag(wall))
-                MapData[_position.x][_position.y].Walls &= ~wall;
+            if (_mapData[_position.x][_position.y].Walls.HasFlag(wall))
+                _mapData[_position.x][_position.y].Walls &= ~wall;
             else
-                MapData[_position.x][_position.y].Walls |= wall;
+                _mapData[_position.x][_position.y].Walls |= wall;
         }
 
         public void SetTileDoor(Wall wall)
         {
-            if (MapData[_position.x][_position.y].Doors.HasFlag(wall))
-                MapData[_position.x][_position.y].Doors &= ~wall;
+            if (_mapData[_position.x][_position.y].Doors.HasFlag(wall))
+                _mapData[_position.x][_position.y].Doors &= ~wall;
             else
-                MapData[_position.x][_position.y].Doors |= wall;
+                _mapData[_position.x][_position.y].Doors |= wall;
         }
 
         public string PrintToString()
@@ -174,7 +174,7 @@ namespace DungeonMapper2.Models
             {
                 for (int indexX = 0; indexX < MaxIndexX + 1; indexX++)
                 {
-                    var tile = MapData[indexX][MaxIndexY - indexY];
+                    var tile = _mapData[indexX][MaxIndexY - indexY];
                     mapString += (tile != null && tile.Traveled) ? "1" : "0";
                 }
                 mapString += "\n";
@@ -182,92 +182,12 @@ namespace DungeonMapper2.Models
             return mapString;
         }
 
-        public TileHost PrintToHost()
-        {
-            var mapDrawing = new DrawingVisual();
-            var drawingContext = mapDrawing.RenderOpen();
-
-            int left, top;
-
-            for (int indexY = 0; indexY < MaxIndexY + 1; indexY++)
-            {
-                for (int indexX = 0; indexX < MaxIndexX + 1; indexX++)
-                {
-                    var tile = MapData[indexX][MaxIndexY - indexY];
-                    left = (indexX * TileSize) + 1;
-                    top = (indexY * TileSize) + 1;
-
-                    // draw the base for the tile if it's null or hasn't been marked for travel
-                    var rectangle = new Rect(left, top, TileSize, TileSize);
-                    if (tile == null || !tile.Traveled)
-                    {
-                        drawingContext.DrawRectangle(Brushes.Black, null, rectangle);
-                        continue;
-                    }
-                    drawingContext.DrawRectangle(Brushes.DarkGray, new Pen { Thickness = 1, Brush = Brushes.Black }, rectangle);
-
-                    // draw walls
-                    if (tile.Walls.HasFlag(Wall.Up))
-                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top, TileSize, _wallWidth));
-                    if (tile.Walls.HasFlag(Wall.Down))
-                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top + TileSize - _wallWidth, TileSize, _wallWidth));
-                    if (tile.Walls.HasFlag(Wall.Left))
-                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left, top, _wallWidth, TileSize));
-                    if (tile.Walls.HasFlag(Wall.Right))
-                        drawingContext.DrawRectangle(Brushes.DimGray, null, new Rect(left + TileSize - _wallWidth, top, _wallWidth, TileSize));
-
-                    // draw doors
-                    if (tile.Doors.HasFlag(Wall.Up))
-                        drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left, top, TileSize, _doorWidth));
-                    if (tile.Doors.HasFlag(Wall.Down))
-                        drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left, top + TileSize - _doorWidth, TileSize, _doorWidth));
-                    if (tile.Doors.HasFlag(Wall.Left))
-                        drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left, top, _doorWidth, TileSize));
-                    if (tile.Doors.HasFlag(Wall.Right))
-                        drawingContext.DrawRectangle(Brushes.Brown, null, new Rect(left + TileSize - _doorWidth, top, _doorWidth, TileSize));
-
-                    // draw transport if available
-                    if (tile.Transport != null)
-                    {
-                        var halfTileSize = (double)TileSize / 2;
-                        var quarterTileSize = (double)TileSize / 4;
-
-                        if (tile.Transport == TransportType.Unknown)
-                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
-                        else if (tile.Transport == TransportType.Pit)
-                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
-                        else if (tile.Transport == TransportType.Portal)
-                            drawingContext.DrawEllipse(Brushes.Black, null, new Point(left + halfTileSize, top + halfTileSize), quarterTileSize, quarterTileSize);
-                    }
-                }
-            }
-
-            left = _position.x * TileSize;
-            top = (MaxIndexY - _position.y) * TileSize;
-
-            // draw the _position marker
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + 1, top + 1, 3, 7));
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + 1, top + 1, 7, 3));
-
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + 1, top + TileSize - 6, 3, 7));
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + 1, top + TileSize - 2, 7, 3));
-
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + TileSize - 6, top + 1, 7, 3));
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + TileSize - 2, top + 1, 3, 7));
-
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + TileSize - 6, top + TileSize - 2, 7, 3));
-            drawingContext.DrawRectangle(Brushes.Red, null, new Rect(left + TileSize - 2, top + TileSize - 6, 3, 7));
-
-            drawingContext.Close();
-            return new TileHost { VisualElement = mapDrawing };
-        }
-
         public void LoadData()
         {
             if (!Id.HasValue) return;
-            MapData = TileDataAccess.GetTiles(Id.Value);
-            MaxIndexX = MapData.Length - 1;
-            MaxIndexY = MapData[0].Length - 1;
+            _mapData = TileDataAccess.GetTiles(Id.Value);
+            MaxIndexX = _mapData.Length - 1;
+            MaxIndexY = _mapData[0].Length - 1;
         }
     }
 }

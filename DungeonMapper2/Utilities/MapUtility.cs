@@ -6,7 +6,7 @@ namespace DungeonMapper2.Utilities
 {
     public static class MapUtility
     {
-        public static TileHost PrintToCanvas(this Map map)
+        public static TileHost PrintTileHost(this Map map)
         {
             var mapDrawing = new DrawingVisual();
             var drawingContext = mapDrawing.RenderOpen();

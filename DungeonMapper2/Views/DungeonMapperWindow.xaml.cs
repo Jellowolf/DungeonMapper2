@@ -1,4 +1,5 @@
 ﻿using DungeonMapperStandard.Models;
+using DungeonMapper2.Utilities;
 using DungeonMapper2.ViewModels;
 using System.Linq;
 using System.Windows;
@@ -32,7 +33,7 @@ namespace DungeonMapper2.Views
                 return;
             canvas.Height = (map.MaxIndexY + 1) * map.TileSize;
             canvas.Width = (map.MaxIndexX + 1) * map.TileSize;
-            //canvas.Children.Add(map.PrintToHost());
+            canvas.Children.Add(map.PrintTileHost());
         }
 
         // Should probably do this as a trigger or something xaml-side

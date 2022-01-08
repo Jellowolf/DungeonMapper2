@@ -1,13 +1,25 @@
-﻿using Microsoft.Data.Sqlite;
+﻿using System.Data;
 using System.IO;
 
 namespace DungeonMapperStandard.DataAccess
 {
     public static class DatabaseManager
     {
-        public static string AppDataPath { get; set; }
+        private static string AppDataPath;
+        private static IDatabaseConnectionHandler DatabaseHandler;
 
-        public static void InitializeDatabase()
+        public static IDbConnection CreateDatabaseConnection() => DatabaseHandler.CreateDatabaseConnection(AppDataPath);
+
+        public static IDbCommand CreateSqlCommand(string sql, IDbConnection databaseConnection) => DatabaseHandler.CreateSqlCommand(sql, databaseConnection);
+
+        public static void Initialize(string appDataPath, IDatabaseConnectionHandler databaseConnectionHandler)
+        {
+            AppDataPath = appDataPath;
+            DatabaseHandler = databaseConnectionHandler;
+            InitializeDatabase();
+        }
+
+        private static void InitializeDatabase()
         {
             var dbFilePath = Path.Combine(AppDataPath, "storage.db");
 
@@ -20,7 +32,7 @@ namespace DungeonMapperStandard.DataAccess
             var dbFile = File.Create(dbFilePath);
             dbFile.Close();
 
-            using (var database = new SqliteConnection($"Filename={dbFilePath}"))
+            using (var database = CreateDatabaseConnection())
             {
                 database.Open();
 
@@ -31,7 +43,7 @@ namespace DungeonMapperStandard.DataAccess
                         ParentFolderId INTEGER NULL
                 )";
 
-                var command = new SqliteCommand(sql, database);
+                var command = CreateSqlCommand(sql, database);
                 command.ExecuteNonQuery();
 
                 sql =
@@ -43,7 +55,7 @@ namespace DungeonMapperStandard.DataAccess
                         FolderId INTEGER NULL
                 )";
 
-                command = new SqliteCommand(sql, database);
+                command = CreateSqlCommand(sql, database);
                 command.ExecuteNonQuery();
 
                 sql =
@@ -58,7 +70,7 @@ namespace DungeonMapperStandard.DataAccess
                         Transport INTEGER NULL
                 )";
 
-                command = new SqliteCommand(sql, database);
+                command = CreateSqlCommand(sql, database);
                 command.ExecuteNonQuery();
 
                 sql =
@@ -67,14 +79,9 @@ namespace DungeonMapperStandard.DataAccess
                         Value VARCHAR(256) NULL
                 )";
 
-                command = new SqliteCommand(sql, database);
+                command = CreateSqlCommand(sql, database);
                 command.ExecuteNonQuery();
             }
-        }
-
-        public static SqliteConnection GetDatabaseConnection()
-        {
-            return new SqliteConnection($"Filename={Path.Combine(AppDataPath, "storage.db")}");
         }
     }
 }
